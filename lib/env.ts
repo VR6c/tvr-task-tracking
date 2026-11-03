@@ -9,6 +9,12 @@ const serverSchema = z.object({
   CRON_SECRET: z.string().min(8),
   /** Optional: self-hosted Bot API server (defaults to https://api.telegram.org). */
   TELEGRAM_API_ROOT: z.string().url().optional(),
+  /** Optional Google Sheets sync: all three must be set to enable it. */
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().email().optional(),
+  GOOGLE_PRIVATE_KEY: z.string().min(1).optional(),
+  GOOGLE_SHEET_ID: z.string().min(1).optional(),
+  /** Tab that receives the daily task list (created when missing). */
+  GOOGLE_SHEET_TAB: z.string().min(1).default('Daily Tasks'),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;

@@ -6,12 +6,13 @@ import type { AdminJobResult } from '@/types/api';
 
 export const dynamic = 'force-dynamic';
 
-/** Sends the scheduled message immediately, exactly as the cron would. */
+/** Runs the job immediately, exactly as the cron would. */
 export const POST = withAuth<{ job: string }>(async (_req, { params }) => {
   if (!isJobKey(params.job)) throw ApiError.notFound('Unknown job');
   try {
     return NextResponse.json<AdminJobResult>({ key: params.job, result: await runJob(params.job) });
   } catch (error) {
+    if (error instanceof ApiError) throw error;
     console.error(`Admin job ${params.job} failed`, error);
     throw ApiError.upstream('The job failed. Check the server logs.');
   }

@@ -676,6 +676,14 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
         expect(unknown.status).toBe(404);
       });
 
+      it('reports a clear 409 when the Google Sheets sync is not configured', async () => {
+        const res = await routes.adminJob.POST(asAdmin('/api/admin/jobs/sheets-sync', { method: 'POST' }), {
+          params: Promise.resolve({ job: 'sheets-sync' }),
+        });
+        expect(res.status).toBe(409);
+        expect(await res.json()).toMatchObject({ code: 'NOT_CONFIGURED' });
+      });
+
       it('searches tasks literally (LIKE wildcards escaped) and deletes by id', async () => {
         await createTask({ title: '100% coverage', category: 'quick_test' });
         await createTask({ title: 'Other task', category: 'quick_test' });

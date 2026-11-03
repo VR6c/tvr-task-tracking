@@ -161,6 +161,16 @@ The **Admin** tab (`/admin`) controls the bot from inside the Mini App. The admi
 - **Scheduled messages**: send the daily digest, daily report or weekly reminder now.
 - **Tasks**: search by title and delete tasks.
 
+## Google Sheets sync (optional)
+
+Sends the daily task list to a Google Sheet. Each task is one row keyed by its Task ID (last column), so changing a status updates the same row; new tasks are appended. The current month is synced daily at 17:15 Phnom Penh (`/api/cron/sheets-sync`) and on demand from **Admin → Scheduled jobs → Google Sheets sync**. Tasks deleted in the app are not removed from the Sheet.
+
+1. In Google Cloud, create a project, enable the **Google Sheets API**, create a **service account** and download its JSON key.
+2. Create a Sheet and share it with the service account's `client_email` as **Editor**.
+3. Set `GOOGLE_SERVICE_ACCOUNT_EMAIL` (`client_email`), `GOOGLE_PRIVATE_KEY` (`private_key`, keep the `\n` escapes) and `GOOGLE_SHEET_ID` (the part of the Sheet URL between `/d/` and `/edit`). `GOOGLE_SHEET_TAB` defaults to `Daily Tasks` and is created if missing.
+
+Without these variables the sync returns a "not configured" error and nothing else is affected.
+
 ## Cron schedules & time zone
 
 All user-facing logic (today's date, Monday–Sunday weeks, month boundaries) runs in **Asia/Phnom_Penh** (UTC+7, no DST) — see `APP_TIMEZONE` in `lib/constants.ts`. Vercel cron expressions are **UTC**, so they are shifted by −7 h:
@@ -170,6 +180,7 @@ All user-facing logic (today's date, Monday–Sunday weeks, month boundaries) ru
 | Daily digest | every day 08:30 | `30 1 * * *` | `/api/cron/daily-digest` |
 | Daily task report ("List all task today (date)") | every day 17:00 | `0 10 * * *` | `/api/cron/daily-report` |
 | Weekly GCIN reminder | Saturday 10:00 | `0 3 * * 6` | `/api/cron/weekly-reminder` |
+| Google Sheets sync | every day 17:15 | `15 10 * * *` | `/api/cron/sheets-sync` |
 
 Cambodia has no daylight saving, so the mapping never changes. On Vercel's **Hobby** plan cron jobs run at most once per day, may fire anywhere within the scheduled hour, and a project is limited to **2** cron jobs. This project defines 3, so Hobby needs one removed from `vercel.json` (or use Pro).
 

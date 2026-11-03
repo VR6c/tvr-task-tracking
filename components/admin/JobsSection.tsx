@@ -18,12 +18,12 @@ export function JobsSection() {
   );
 
   const run = async (key: string, label: string) => {
-    if (!window.confirm(`Send "${label}" to your Telegram chat now?`)) return;
+    if (!window.confirm(`Run "${label}" now?`)) return;
     setRunning(key);
     try {
       await apiFetch<AdminJobResult>(`/api/admin/jobs/${key}`, { method: 'POST' });
       haptic('success');
-      toast.show(`${label} sent`);
+      toast.show(`${label} done`);
     } catch (error) {
       haptic('error');
       toast.show(errorMessage(error), 'error');
@@ -33,7 +33,7 @@ export function JobsSection() {
   };
 
   return (
-    <Section id="admin-jobs" title="Scheduled messages">
+    <Section id="admin-jobs" title="Scheduled jobs">
       {jobs.error ? (
         <InlineError message={jobs.error} onRetry={jobs.reload} />
       ) : !jobs.data ? (
@@ -53,7 +53,7 @@ export function JobsSection() {
                 className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-accent-fg disabled:opacity-60"
               >
                 <Send aria-hidden className="size-4" />
-                {running === job.key ? 'Sending...' : 'Run now'}
+                {running === job.key ? 'Running...' : 'Run now'}
               </button>
             </li>
           ))}

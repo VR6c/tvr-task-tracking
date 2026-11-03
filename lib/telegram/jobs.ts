@@ -1,21 +1,23 @@
 import { getDb } from '@/lib/db/client';
-import { listCarryOvers, listOpenToday, listTasksByDate } from '@/lib/db/tasks';
+import { listCarryOvers, listOpenToday, listTasksByDate, listTasksByMonth } from '@/lib/db/tasks';
 import { loadWeeklyView } from '@/lib/db/views';
 import { getEnv } from '@/lib/env';
 import { toTaskDTO } from '@/lib/tasks';
+import { syncTasksToSheet } from '@/lib/sheets/daily-tasks';
 import { getTelegramApi, openAppKeyboard } from '@/lib/telegram/bot';
 import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
 import { formatDailyDigest, formatWeeklyReminder } from '@/lib/telegram/digest';
-import { todayInTimezone, weekRange } from '@/lib/week-utils';
+import { monthYearOf, todayInTimezone, weekRange } from '@/lib/week-utils';
 
-/** Scheduled Telegram messages. Run by the cron routes and by the admin dashboard's "Run now". */
-export const JOB_KEYS = ['daily-digest', 'daily-report', 'weekly-reminder'] as const;
+/** Scheduled jobs (Telegram messages and the Google Sheets sync). Run by the cron routes and by the admin dashboard. */
+export const JOB_KEYS = ['daily-digest', 'daily-report', 'weekly-reminder', 'sheets-sync'] as const;
 export type JobKey = (typeof JOB_KEYS)[number];
 
 export const JOB_LABELS: Record<JobKey, { label: string; schedule: string }> = {
   'daily-digest': { label: 'Daily digest', schedule: 'Every day 08:30' },
   'daily-report': { label: 'Daily task report', schedule: 'Every day 17:00' },
   'weekly-reminder': { label: 'Weekly GCIN reminder', schedule: 'Saturday 10:00' },
+  'sheets-sync': { label: 'Google Sheets sync', schedule: 'Every day 17:15' },
 };
 
 export const isJobKey = (value: string): value is JobKey => (JOB_KEYS as readonly string[]).includes(value);
@@ -58,13 +60,21 @@ async function weeklyReminder(userId: number) {
   return { sent: true, weekStart: range.start };
 }
 
+/** Upserts this month's tasks into the Google Sheet (rows keyed by task ID). */
+async function sheetsSync(userId: number) {
+  const month = monthYearOf(todayInTimezone());
+  const tasks = (await listTasksByMonth(getDb(), userId, month)).map(toTaskDTO);
+  return { month, tasks: tasks.length, ...(await syncTasksToSheet(tasks)) };
+}
+
 const RUNNERS: Record<JobKey, (userId: number) => Promise<Record<string, unknown>>> = {
   'daily-digest': dailyDigest,
   'daily-report': dailyReport,
   'weekly-reminder': weeklyReminder,
+  'sheets-sync': sheetsSync,
 };
 
-/** Sends the job's message to the allowed Telegram user and returns a small summary. */
+/** Runs the job for the allowed Telegram user and returns a small summary. */
 export function runJob(key: JobKey): Promise<Record<string, unknown>> {
   return RUNNERS[key](getEnv().ALLOWED_TELEGRAM_USER_ID);
 }
