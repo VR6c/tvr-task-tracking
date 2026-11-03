@@ -56,6 +56,11 @@ import * as botRoute from '@/app/api/bot/route';
 import * as dailyRoute from '@/app/api/cron/daily-digest/route';
 import * as weeklyReminderRoute from '@/app/api/cron/weekly-reminder/route';
 import * as dailyReportRoute from '@/app/api/cron/daily-report/route';
+import * as adminStatsRoute from '@/app/api/admin/stats/route';
+import * as adminBotRoute from '@/app/api/admin/bot/route';
+import * as adminJobRoute from '@/app/api/admin/jobs/[job]/route';
+import * as adminTasksRoute from '@/app/api/admin/tasks/route';
+import * as adminTaskRoute from '@/app/api/admin/tasks/[id]/route';
 import { todayInTimezone } from '@/lib/week-utils';
 
 const ROUTES = {
@@ -69,6 +74,11 @@ const ROUTES = {
   daily: dailyRoute,
   reminder: weeklyReminderRoute,
   report: dailyReportRoute,
+  adminStats: adminStatsRoute,
+  adminBot: adminBotRoute,
+  adminJob: adminJobRoute,
+  adminTasks: adminTasksRoute,
+  adminTask: adminTaskRoute,
 };
 
 const noParams = { params: Promise.resolve({}) };
@@ -513,7 +523,11 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
           const result =
             method === 'getMe'
               ? { id: 1, is_bot: true, first_name: 'TVR', username: 'tvr_bot', can_join_groups: false, can_read_all_group_messages: false, supports_inline_queries: false }
-              : { message_id: 1, date: 1, chat: { id: ALLOWED, type: 'private' } };
+              : method === 'getWebhookInfo'
+                ? { url: 'https://app.example.com/api/bot', has_custom_certificate: false, pending_update_count: 2 }
+                : method === 'setWebhook' || method === 'setChatMenuButton' || method === 'setMyCommands'
+                  ? true
+                  : { message_id: 1, date: 1, chat: { id: ALLOWED, type: 'private' } };
           res.setHeader('content-type', 'application/json');
           res.end(JSON.stringify({ ok: true, result }));
         });
@@ -604,6 +618,81 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       expect(String(sent?.body.text)).toContain('GCIN');
       expect(String(sent?.body.text)).toContain('GCIN entries recorded: 0/4');
       expect(JSON.stringify(sent?.body.reply_markup)).toContain('https://app.example.com/weekly');
+    });
+
+    describe('admin dashboard', () => {
+      const asAdmin = (path: string, init: { method?: string; body?: unknown } = {}) =>
+        call(path, { ...init, auth: AUTH() });
+
+      it('rejects other Telegram users and missing credentials on every admin route', async () => {
+        const foreign = signedInitData(FOREIGN);
+        expect((await routes.adminStats.GET(call('/api/admin/stats', { auth: foreign }), noParams)).status).toBe(403);
+        expect((await routes.adminBot.GET(call('/api/admin/bot'), noParams)).status).toBe(401);
+        const job = { params: Promise.resolve({ job: 'daily-digest' }) };
+        expect((await routes.adminJob.POST(call('/api/admin/jobs/daily-digest', { method: 'POST', auth: foreign }), job)).status).toBe(403);
+        expect(outbound).toEqual([]);
+      });
+
+      it('stats count tasks, open carry-overs and per-month categories', async () => {
+        const today = todayInTimezone();
+        await createTask({ title: 'Old open', category: 'quick_test', status: 'Feedback', scheduledDate: '2026-01-05', isOverDeadline: true });
+        await createTask({ title: 'Today done', category: 'production_bug', status: 'Done', scheduledDate: today });
+        const res = await routes.adminStats.GET(asAdmin('/api/admin/stats'), noParams);
+        expect(res.status).toBe(200);
+        expect(await res.json()).toMatchObject({
+          totals: { tasks: 2, open: 1, openCarryOvers: 1, overDeadline: 1, thisMonth: 1 },
+          byStatus: { Feedback: 1, Done: 1, Success: 0 },
+          byCategory: { production_bug: 1, quick_test: 0 },
+        });
+      });
+
+      it('bot status reports the webhook and POST re-registers it', async () => {
+        const status = await routes.adminBot.GET(asAdmin('/api/admin/bot'), noParams);
+        expect(await status.json()).toMatchObject({
+          username: 'tvr_bot',
+          webhook: { url: 'https://app.example.com/api/bot', expectedUrl: 'https://app.example.com/api/bot', pendingUpdates: 2 },
+        });
+
+        const sync = await routes.adminBot.POST(asAdmin('/api/admin/bot', { method: 'POST' }), noParams);
+        expect(sync.status).toBe(200);
+        const methods = outbound.map((c) => c.method);
+        expect(methods).toEqual(expect.arrayContaining(['setWebhook', 'setChatMenuButton', 'setMyCommands']));
+        const hook = outbound.find((c) => c.method === 'setWebhook');
+        expect(hook?.body).toMatchObject({ secret_token: WEBHOOK_SECRET, drop_pending_updates: false });
+      });
+
+      it('runs a job on demand and 404s on unknown jobs', async () => {
+        await createTask({ title: 'Carry me', category: 'quick_test', status: 'Feedback', scheduledDate: '2026-10-01' });
+        const ok = await routes.adminJob.POST(asAdmin('/api/admin/jobs/daily-digest', { method: 'POST' }), {
+          params: Promise.resolve({ job: 'daily-digest' }),
+        });
+        expect(ok.status).toBe(200);
+        expect(await ok.json()).toMatchObject({ key: 'daily-digest', result: { sent: true, carryOvers: 1 } });
+        expect(outbound.filter((c) => c.method === 'sendMessage')).toHaveLength(1);
+
+        const unknown = await routes.adminJob.POST(asAdmin('/api/admin/jobs/nope', { method: 'POST' }), {
+          params: Promise.resolve({ job: 'nope' }),
+        });
+        expect(unknown.status).toBe(404);
+      });
+
+      it('searches tasks literally (LIKE wildcards escaped) and deletes by id', async () => {
+        await createTask({ title: '100% coverage', category: 'quick_test' });
+        await createTask({ title: 'Other task', category: 'quick_test' });
+        const hit = await routes.adminTasks.GET(asAdmin('/api/admin/tasks?q=100%25'), noParams);
+        const { tasks: found } = (await hit.json()) as { tasks: { id: string; title: string }[] };
+        expect(found.map((t) => t.title)).toEqual(['100% coverage']);
+
+        const all = await routes.adminTasks.GET(asAdmin('/api/admin/tasks'), noParams);
+        expect(((await all.json()) as { tasks: unknown[] }).tasks).toHaveLength(2);
+
+        const target = { params: Promise.resolve({ id: found[0]?.id ?? '' }) };
+        const del = await routes.adminTask.DELETE(asAdmin(`/api/admin/tasks/${found[0]?.id}`, { method: 'DELETE' }), target);
+        expect(del.status).toBe(204);
+        const again = await routes.adminTask.DELETE(asAdmin(`/api/admin/tasks/${found[0]?.id}`, { method: 'DELETE' }), target);
+        expect(again.status).toBe(404);
+        expect(await db.select().from(tasks)).toHaveLength(1);
+      });
     });
   });
 });

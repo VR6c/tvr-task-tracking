@@ -53,6 +53,10 @@ export const uuidSchema = z.string().uuid();
 
 export const tasksQuerySchema = z.object({ date: isoDateSchema });
 
+export const adminTasksQuerySchema = z.object({
+  q: z.string().trim().max(100).default(''),
+});
+
 export const weeklyQuerySchema = z
   .object({ startDate: isoDateSchema, endDate: isoDateSchema })
   .refine((v) => isWeekRange(v.startDate, v.endDate), {

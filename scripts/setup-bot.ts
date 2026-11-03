@@ -1,5 +1,6 @@
 import './load-env';
 import { Api } from 'grammy';
+import { syncBot } from '../lib/telegram/setup';
 
 /**
  * Registers the webhook (with secret token) and the Mini App menu button.
@@ -25,22 +26,7 @@ async function main(): Promise<void> {
     throw new Error('NEXT_PUBLIC_APP_URL must be an https URL (use a tunnel such as ngrok or cloudflared locally).');
   }
 
-  await api.setWebhook(`${appUrl}/api/bot`, {
-    secret_token: secret,
-    allowed_updates: ['message'],
-    drop_pending_updates: true,
-  });
-  await api.setChatMenuButton({
-    menu_button: { type: 'web_app', text: 'Tasks', web_app: { url: `${appUrl}/daily` } },
-  });
-  await api.setMyCommands([
-    { command: 'start', description: 'Open TVR Task Tracking' },
-    { command: 'menu', description: 'Show the quick menu buttons' },
-    { command: 'today', description: "List today's tasks" },
-    { command: 'week', description: 'This week in slide format' },
-    { command: 'kpi', description: 'Monthly KPI snapshot' },
-    { command: 'help', description: 'How to log a task by message' },
-  ]);
+  await syncBot(api, { appUrl, secret, dropPendingUpdates: true });
 
   const info = await api.getWebhookInfo();
   console.log(`@${me.username}: webhook -> ${info.url}`);

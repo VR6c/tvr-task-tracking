@@ -8,6 +8,7 @@ export type ApiErrorCode =
   | 'VALIDATION_ERROR'
   | 'INVALID_JSON'
   | 'NOT_FOUND'
+  | 'UPSTREAM_ERROR'
   | 'INTERNAL_ERROR';
 
 export class ApiError extends Error {
@@ -28,6 +29,9 @@ export class ApiError extends Error {
   }
   static notFound(message = 'Resource not found') {
     return new ApiError(404, 'NOT_FOUND', message);
+  }
+  static upstream(message = 'Telegram request failed') {
+    return new ApiError(502, 'UPSTREAM_ERROR', message);
   }
 }
 

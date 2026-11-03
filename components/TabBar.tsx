@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, CalendarDays, ListChecks, type LucideIcon } from 'lucide-react';
+import { BarChart3, CalendarDays, ListChecks, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { PAGE_GUTTER, PAGE_WIDTH } from '@/lib/layout';
 
@@ -10,6 +10,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/daily', label: 'Daily', icon: ListChecks },
   { href: '/weekly', label: 'Weekly', icon: CalendarDays },
   { href: '/monthly', label: 'Monthly', icon: BarChart3 },
+  { href: '/admin', label: 'Admin', icon: ShieldCheck },
 ];
 
 /** Bottom tab bar on phones; becomes a sticky top bar from the tablet breakpoint up. */

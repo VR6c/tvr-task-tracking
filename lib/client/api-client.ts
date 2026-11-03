@@ -21,7 +21,7 @@ function authorization(): string {
 }
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH';
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   body?: unknown;
   signal?: AbortSignal;
 }
@@ -52,6 +52,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         : (body?.error ?? 'Request failed. Please retry.');
     throw new ApiClientError(message, body?.code ?? 'HTTP_ERROR', response.status);
   }
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
 

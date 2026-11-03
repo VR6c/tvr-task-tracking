@@ -67,6 +67,54 @@ export interface MonthlyResponse {
   narrative: { challenges: string; successStories: string };
 }
 
+export interface AdminStatsResponse {
+  today: string;
+  month: string;
+  totals: {
+    tasks: number;
+    thisMonth: number;
+    open: number;
+    openCarryOvers: number;
+    overDeadline: number;
+    weeklyReviews: number;
+    monthlySummaries: number;
+  };
+  lastTaskAt: string | null;
+  byStatus: Record<TaskStatus, number>;
+  /** Current month only. */
+  byCategory: Record<TaskCategory, number>;
+}
+
+export interface AdminBotResponse {
+  username: string | null;
+  webhook: {
+    url: string;
+    expectedUrl: string;
+    pendingUpdates: number;
+    lastError: string | null;
+    lastErrorAt: string | null;
+  };
+}
+
+export interface AdminJob {
+  key: string;
+  label: string;
+  schedule: string;
+}
+
+export interface AdminJobsResponse {
+  jobs: AdminJob[];
+}
+
+export interface AdminJobResult {
+  key: string;
+  result: Record<string, unknown>;
+}
+
+export interface AdminTasksResponse {
+  tasks: TaskDTO[];
+}
+
 export interface ApiErrorBody {
   error: string;
   code: string;

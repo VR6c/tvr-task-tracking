@@ -152,6 +152,15 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/week
 
 Smoke test: open the app → add a task → copy the standup; message the bot a task; `curl` the cron routes with the production `CRON_SECRET`.
 
+## Admin dashboard
+
+The **Admin** tab (`/admin`) controls the bot from inside the Mini App. The admin is the single allowed Telegram user (`ALLOWED_TELEGRAM_USER_ID`); every `/api/admin/*` route uses the same initData check as the rest of the API.
+
+- **Overview**: task totals, open/carry-over/over-deadline counts, current-month category breakdown.
+- **Bot**: bot username, webhook URL vs. the expected `NEXT_PUBLIC_APP_URL`, pending updates and the last Telegram error, plus a button that re-runs what `npm run bot:setup` does (webhook, menu button, commands; pending updates are kept).
+- **Scheduled messages**: send the daily digest, daily report or weekly reminder now.
+- **Tasks**: search by title and delete tasks.
+
 ## Cron schedules & time zone
 
 All user-facing logic (today's date, Monday–Sunday weeks, month boundaries) runs in **Asia/Phnom_Penh** (UTC+7, no DST) — see `APP_TIMEZONE` in `lib/constants.ts`. Vercel cron expressions are **UTC**, so they are shifted by −7 h:
