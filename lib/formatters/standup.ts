@@ -23,10 +23,10 @@ export function formatDailyStandup(date: string, tasks: readonly TaskDTO[]): str
   return [
     `*Daily Standup — ${formatDateLong(date)}*`,
     '',
-    section('✅ Success / Completed', completed.map((t) => taskLine(t))),
+    section('Success / Completed', completed.map((t) => taskLine(t))),
     '',
-    section('⏳ Feedback / Pending', pending.map((t) => taskLine(t))),
+    section('Feedback / Pending', pending.map((t) => taskLine(t))),
     '',
-    section('🚧 Blockers & Issues Logged', issues.map((t) => taskLine(t, { withRemark: true }))),
+    section('Blockers & Issues Logged', issues.map((t) => taskLine(t, { withRemark: true }))),
   ].join('\n');
 }

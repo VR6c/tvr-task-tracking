@@ -13,7 +13,7 @@ function listed(tasks: readonly TaskDTO[]): string[] {
 
 /** FR-BOT-03: 08:30 digest - what is carried over plus what is already planned for today. */
 export function formatDailyDigest(date: string, carryOvers: readonly TaskDTO[], today: readonly TaskDTO[]): string {
-  const lines = [`☀️ *Good morning — ${formatDateLong(date)}*`, ''];
+  const lines = [`*Good morning — ${formatDateLong(date)}*`, ''];
   if (carryOvers.length === 0 && today.length === 0) {
     lines.push('No open tasks. Log today\'s first test to get started.');
     return lines.join('\n');
@@ -21,7 +21,7 @@ export function formatDailyDigest(date: string, carryOvers: readonly TaskDTO[], 
   if (carryOvers.length) {
     lines.push(`*Carry-over priorities* (${carryOvers.length})`, ...listed(carryOvers), '');
   } else {
-    lines.push('Nothing carried over from earlier days. 🎉', '');
+    lines.push('Nothing carried over from earlier days.', '');
   }
   if (today.length) lines.push(`*Already planned today* (${today.length})`, ...listed(today));
   return lines.join('\n').trimEnd();
@@ -36,7 +36,7 @@ export function formatWeeklyReminder(view: WeeklyResponse): string {
       ? 'All four GCIN entries are recorded — review them before the meeting.'
       : `GCIN entries recorded: ${filled}/4. Capture Good, Challenge, Improvement and Next Action while it is fresh.`;
   return [
-    `📝 *Weekly GCIN reminder — Week ${isoWeekNumber(range.start)}* (${inline(formatRangeShort(range))})`,
+    `*Weekly GCIN reminder — Week ${isoWeekNumber(range.start)}* (${inline(formatRangeShort(range))})`,
     '',
     `Completed this week: ${view.sections.achievements.length} · Still open: ${view.sections.plan.length} · Issues logged: ${view.sections.issues.length}`,
     status,

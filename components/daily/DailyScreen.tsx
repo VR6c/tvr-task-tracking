@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarCheck } from 'lucide-react';
+import { CalendarCheck, ClipboardCopy } from 'lucide-react';
 import { QuickAddCard } from '@/components/daily/QuickAddCard';
 import { TaskEditSheet } from '@/components/daily/TaskEditSheet';
 import { TaskFeed } from '@/components/daily/TaskFeed';
@@ -82,7 +82,8 @@ export function DailyScreen() {
 
       <StickyAction>
         <CopyButton
-          label="📋 Copy Daily Standup Report"
+          label="Copy Daily Standup Report"
+          icon={ClipboardCopy}
           successMessage="Standup report copied"
           disabled={!resource.data}
           getText={() => formatDailyStandup(date, tasks)}

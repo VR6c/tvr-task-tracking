@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, type LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { copyText } from '@/lib/client/clipboard';
 import { haptic } from '@/lib/client/telegram';
@@ -9,6 +9,8 @@ import { cn } from '@/lib/cn';
 
 interface CopyButtonProps {
   label: string;
+  /** Leading icon; swaps to a check mark briefly after a successful copy. */
+  icon?: LucideIcon;
   /** Called at tap time so the copied text always reflects the latest state. */
   getText: () => string;
   successMessage: string;
@@ -16,7 +18,7 @@ interface CopyButtonProps {
 }
 
 /** Sticky full-width copy action with a manual-copy dialog for webviews where both clipboard paths fail. */
-export function CopyButton({ label, getText, successMessage, disabled }: CopyButtonProps) {
+export function CopyButton({ label, icon = Copy, getText, successMessage, disabled }: CopyButtonProps) {
   const toast = useToast();
   const [copied, setCopied] = useState(false);
   const [manualText, setManualText] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function CopyButton({ label, getText, successMessage, disabled }: CopyBut
     }
   }
 
-  const Icon = copied ? Check : Copy;
+  const Icon = copied ? Check : icon;
   return (
     <>
       <button

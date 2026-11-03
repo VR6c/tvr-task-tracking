@@ -30,7 +30,7 @@ export function createBot(): Bot {
   bot.command('start', (ctx) =>
     ctx.reply(
       [
-        '👋 *TVR Task Tracking*',
+        '*TVR Task Tracking*',
         '',
         'Open the app to log tasks, run your weekly GCIN and check monthly KPIs.',
         'You can also message me a task, e.g. `Quick Test v2.5.17 build 668 #success`.',
@@ -61,7 +61,7 @@ export function createBot(): Bot {
     ].filter(Boolean);
     await ctx.reply(
       [
-        `✅ Logged for ${todayInTimezone()}: ${row.title}`,
+        `Logged for ${todayInTimezone()}: ${row.title}`,
         details.join(' · '),
         row.issueRemark ? `Issue: ${row.issueRemark}` : null,
       ]

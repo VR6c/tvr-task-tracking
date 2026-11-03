@@ -24,14 +24,14 @@ describe('formatDailyStandup', () => {
       [
         '*Daily Standup — Tue, Nov 3 2026*',
         '',
-        '*✅ Success / Completed* (2)',
+        '*Success / Completed* (2)',
         '• Regression voice msg — Quick Test · v2.5.17 build 668',
         '• \\[Chat] Member Not Found — Prod Bug',
         '',
-        '*⏳ Feedback / Pending* (1)',
+        '*Feedback / Pending* (1)',
         '• Zoom QR scan — Feature',
         '',
-        '*🚧 Blockers & Issues Logged* (1)',
+        '*Blockers & Issues Logged* (1)',
         '• \\[Chat] Member Not Found — Prod Bug',
         '   ↳ Profile lookup fails',
       ].join('\n'),
@@ -41,8 +41,8 @@ describe('formatDailyStandup', () => {
   it('renders _None_ for empty sections and escapes user text', () => {
     const output = formatDailyStandup('2026-11-03', [makeTask({ title: 'fix_user*name', status: 'Done' })]);
     expect(output).toContain('fix\\_user\\*name');
-    expect(output).toContain('*⏳ Feedback / Pending* (0)\n_None_');
-    expect(output).toContain('*🚧 Blockers & Issues Logged* (0)\n_None_');
+    expect(output).toContain('*Feedback / Pending* (0)\n_None_');
+    expect(output).toContain('*Blockers & Issues Logged* (0)\n_None_');
   });
 
   it('keeps multi-line remarks on a single list line', () => {

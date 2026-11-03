@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertOctagon, CheckCheck, ClipboardCheck, ListTodo } from 'lucide-react';
+import { AlertOctagon, CheckCheck, ClipboardCheck, ListTodo, Presentation } from 'lucide-react';
 import { GcinCard } from '@/components/weekly/GcinCard';
 import { WeeklySectionList } from '@/components/weekly/WeeklySectionList';
 import { CopyButton } from '@/components/ui/CopyButton';
@@ -64,7 +64,8 @@ export function WeeklyBody({ view }: { view: WeeklyResponse }) {
 
       <StickyAction>
         <CopyButton
-          label="📤 Copy Slide Format"
+          label="Copy Slide Format"
+          icon={Presentation}
           successMessage="Slide format copied"
           getText={() => formatWeeklySlide(view.weekStartDate, sections, gcin.value)}
         />
