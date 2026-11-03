@@ -44,7 +44,7 @@ export function WeeklyBody({ view }: { view: WeeklyResponse }) {
         <div className="space-y-3">
           <h2 className="text-base font-bold">This week&apos;s tasks</h2>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
-            <WeeklySectionList title="Last Week Achievement" icon={CheckCheck} tasks={sections.achievements} emptyText="Nothing marked Done or Success yet." />
+            <WeeklySectionList title="Last Week Achievement" icon={CheckCheck} tasks={sections.achievements} emptyText="No tasks logged this week yet." />
             <WeeklySectionList title="Plan in This Week" icon={ListTodo} tasks={sections.plan} emptyText="No pending or carried-over tasks." />
             <WeeklySectionList title="Tracking Owner Confirm Task" icon={ClipboardCheck} tasks={sections.tracking} emptyText="No TestFlight builds or milestone sign-offs." />
             <WeeklySectionList title="Issue Found Register" icon={AlertOctagon} tasks={sections.issues} emptyText="No issues logged." showRemark />

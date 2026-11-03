@@ -1,5 +1,6 @@
 import { inline } from '@/lib/formatters/escape';
 import { taskLine } from '@/lib/formatters/standup';
+import { countCompleted } from '@/lib/tasks';
 import { daysBetween, formatDateLong, formatRangeShort, isoWeekNumber, weekRange } from '@/lib/week-utils';
 import type { TaskDTO, WeeklyResponse } from '@/types/api';
 
@@ -46,7 +47,7 @@ export function formatWeeklyReminder(view: WeeklyResponse): string {
   return [
     `*Weekly GCIN reminder — Week ${isoWeekNumber(range.start)}* (${inline(formatRangeShort(range))})`,
     '',
-    `Completed this week: ${view.sections.achievements.length} · Still open: ${view.sections.plan.length} · Issues logged: ${view.sections.issues.length}`,
+    `Completed this week: ${countCompleted(view.sections.achievements)} · Still open: ${view.sections.plan.length} · Issues logged: ${view.sections.issues.length}`,
     status,
   ].join('\n');
 }

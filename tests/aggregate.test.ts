@@ -33,11 +33,13 @@ describe('aggregateWeek (FR-WK-01)', () => {
   ];
   const sections = aggregateWeek(all, range);
 
-  it('puts Done/Success tasks inside Monday-Sunday into Last Week Achievement', () => {
-    expect(sections.achievements).toEqual(expect.arrayContaining([doneMon, successSun, milestone, withIssue]));
+  it('puts every task inside Monday-Sunday into Last Week Achievement, whatever its status', () => {
+    expect(sections.achievements).toEqual(
+      expect.arrayContaining([doneMon, successSun, milestone, withIssue, feedbackWed, testFlight]),
+    );
     expect(sections.achievements).not.toContain(prevWeekDone);
     expect(sections.achievements).not.toContain(nextWeekDone);
-    expect(sections.achievements).not.toContain(feedbackWed);
+    expect(sections.achievements).not.toContain(carryOver);
   });
 
   it('plans Feedback tasks plus carry-overs from earlier weeks', () => {
@@ -52,5 +54,35 @@ describe('aggregateWeek (FR-WK-01)', () => {
 
   it('registers only tasks with a non-blank issue remark', () => {
     expect(sections.issues).toEqual([withIssue]);
+  });
+});
+
+describe('aggregateWeek: one task logged on several days', () => {
+  const mon = makeTask({ title: 'Task A', status: 'Feedback', scheduledDate: '2026-11-02' });
+  const tue = makeTask({ title: 'task a ', status: 'Feedback', scheduledDate: '2026-11-03' });
+  const wed = makeTask({ title: 'Task A', status: 'Done', scheduledDate: '2026-11-04' });
+
+  it('counts it once and takes the status of the latest entry', () => {
+    const { achievements, plan } = aggregateWeek([mon, tue, wed], range);
+    expect(achievements).toEqual([wed]);
+    expect(plan).toEqual([]);
+  });
+
+  it('keeps it in the plan while the latest entry is still Feedback', () => {
+    const { achievements, plan } = aggregateWeek([mon, tue], range);
+    expect(achievements).toEqual([tue]);
+    expect(plan).toEqual([tue]);
+  });
+
+  it('drops an earlier-week carry-over once it is finished inside the window', () => {
+    const carry = makeTask({ title: 'Task A', status: 'Feedback', scheduledDate: '2026-10-29' });
+    const { achievements, plan } = aggregateWeek([carry, wed], range);
+    expect(achievements).toEqual([wed]);
+    expect(plan).toEqual([]);
+  });
+
+  it('does not merge different titles', () => {
+    const other = makeTask({ title: 'Task B', status: 'Feedback', scheduledDate: '2026-11-03' });
+    expect(aggregateWeek([wed, other], range).achievements).toEqual([other, wed]);
   });
 });

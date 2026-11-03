@@ -288,7 +288,7 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
         sections: Record<'achievements' | 'plan' | 'tracking' | 'issues', { title: string }[]>;
         gcin: Record<string, string>;
       };
-      expect(view.sections.achievements.map((t) => t.title)).toEqual(['Done Mon']);
+      expect(view.sections.achievements.map((t) => t.title)).toEqual(['Done Mon', 'Issue']);
       expect(view.sections.plan.map((t) => t.title)).toEqual(['Carry over', 'Issue']);
       expect(view.sections.issues.map((t) => t.title)).toEqual(['Issue']);
       expect(view.gcin).toEqual({ good: '', challenge: '', improvement: '', nextAction: '' });
