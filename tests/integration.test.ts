@@ -434,6 +434,58 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       expect(String(calls.find((c) => c.method === 'sendMessage')?.payload.text)).toContain('could not turn that into a task');
     });
 
+    it('/start also sends the persistent Quick Menu keyboard', async () => {
+      const { bot, calls } = await makeBot();
+      await bot.handleUpdate(message(ALLOWED, '/start', [{ type: 'bot_command', offset: 0, length: 6 }]));
+      const sends = calls.filter((c) => c.method === 'sendMessage');
+      expect(sends).toHaveLength(2);
+      const menu = sends[1]?.payload.reply_markup as { is_persistent: boolean; keyboard: { text: string; web_app?: { url: string } }[][] };
+      expect(menu.is_persistent).toBe(true);
+      expect(menu.keyboard[0]?.[0]).toEqual({ text: 'Open App', web_app: { url: 'https://app.example.com/daily' } });
+      expect(menu.keyboard[1]?.map((b) => b.text)).toEqual(["Today's Tasks", 'This Week', 'Monthly KPIs']);
+    });
+
+    it("the Today's Tasks button lists today's tasks and does not log a task", async () => {
+      await createTask({ title: 'Morning smoke', category: 'quick_test', status: 'Done', scheduledDate: todayInTimezone() });
+      const { bot, calls } = await makeBot();
+      await bot.handleUpdate(message(ALLOWED, "Today's Tasks"));
+      const text = String(calls.find((c) => c.method === 'sendMessage')?.payload.text);
+      expect(text).toContain('List all task today (');
+      expect(text).toContain('Morning smoke');
+      expect(await db.select().from(tasks)).toHaveLength(1);
+    });
+
+    it('the This Week button replies with the weekly slide format and does not log a task', async () => {
+      await createTask({ title: 'Wallet smoke', category: 'quick_test', status: 'Done', scheduledDate: todayInTimezone() });
+      const { bot, calls } = await makeBot();
+      await bot.handleUpdate(message(ALLOWED, 'This Week'));
+      const sent = calls.find((c) => c.method === 'sendMessage');
+      const text = String(sent?.payload.text);
+      expect(text).toContain('*CheckinMe Weekly Meeting*');
+      expect(text).toContain('*1. Last Week Achievement*');
+      expect(text).toContain('Wallet smoke');
+      expect(JSON.stringify(sent?.payload.reply_markup)).toContain('/weekly');
+      expect(await db.select().from(tasks)).toHaveLength(1);
+    });
+
+    it('the Monthly KPIs button replies with the KPI snapshot and does not log a task', async () => {
+      await createTask({ title: 'Prod bug', category: 'production_bug', status: 'Done', scheduledDate: todayInTimezone() });
+      const { bot, calls } = await makeBot();
+      await bot.handleUpdate(message(ALLOWED, 'Monthly KPIs'));
+      const sent = calls.find((c) => c.method === 'sendMessage');
+      expect(String(sent?.payload.text)).toContain('*Monthly KPIs — ');
+      expect(String(sent?.payload.text)).toContain('Finding Production Error');
+      expect(await db.select().from(tasks)).toHaveLength(1);
+    });
+
+    it('/menu re-sends the keyboard and typed tasks still work', async () => {
+      const { bot, calls } = await makeBot();
+      await bot.handleUpdate(message(ALLOWED, '/menu', [{ type: 'bot_command', offset: 0, length: 5 }]));
+      expect(JSON.stringify(calls.find((c) => c.method === 'sendMessage')?.payload.reply_markup)).toContain('is_persistent');
+      await bot.handleUpdate(message(ALLOWED, 'Zoom QR check #done'));
+      expect((await db.select().from(tasks)).map((t) => t.title)).toEqual(['Zoom QR check']);
+    });
+
     it('ignores other Telegram users', async () => {
       const { bot, calls } = await makeBot();
       await bot.handleUpdate(message(FOREIGN, 'Quick Test #success'));

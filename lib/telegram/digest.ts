@@ -1,29 +1,37 @@
 import { inline } from '@/lib/formatters/escape';
 import { taskLine } from '@/lib/formatters/standup';
-import { formatDateLong, formatRangeShort, isoWeekNumber, weekRange } from '@/lib/week-utils';
+import { daysBetween, formatDateLong, formatRangeShort, isoWeekNumber, weekRange } from '@/lib/week-utils';
 import type { TaskDTO, WeeklyResponse } from '@/types/api';
 
 const MAX_LISTED = 15;
 
-function listed(tasks: readonly TaskDTO[]): string[] {
-  const lines = tasks.slice(0, MAX_LISTED).map((t) => `${taskLine(t)} _(${t.scheduledDate.slice(5)})_`);
+/** "today", "waiting 1 day", "waiting 4 days" - how long a task has been sitting in Feedback. */
+export function waitingLabel(scheduledDate: string, today: string): string {
+  const days = daysBetween(scheduledDate, today);
+  if (days <= 0) return 'today';
+  return `waiting ${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
+function listed(tasks: readonly TaskDTO[], today: string): string[] {
+  const lines = tasks.slice(0, MAX_LISTED).map((t) => `${taskLine(t)} _(${waitingLabel(t.scheduledDate, today)})_`);
   if (tasks.length > MAX_LISTED) lines.push(`…and ${tasks.length - MAX_LISTED} more`);
   return lines;
 }
 
-/** FR-BOT-03: 08:30 digest - what is carried over plus what is already planned for today. */
+/** FR-BOT-03: 08:30 reminder - every task still in Feedback, oldest first, with how long it has been waiting. */
 export function formatDailyDigest(date: string, carryOvers: readonly TaskDTO[], today: readonly TaskDTO[]): string {
   const lines = [`*Good morning — ${formatDateLong(date)}*`, ''];
   if (carryOvers.length === 0 && today.length === 0) {
     lines.push('No open tasks. Log today\'s first test to get started.');
     return lines.join('\n');
   }
+  lines.push(`${carryOvers.length + today.length} task(s) still in Feedback.`, '');
   if (carryOvers.length) {
-    lines.push(`*Carry-over priorities* (${carryOvers.length})`, ...listed(carryOvers), '');
+    lines.push(`*Carry-over priorities* (${carryOvers.length})`, ...listed(carryOvers, date), '');
   } else {
     lines.push('Nothing carried over from earlier days.', '');
   }
-  if (today.length) lines.push(`*Already planned today* (${today.length})`, ...listed(today));
+  if (today.length) lines.push(`*Already planned today* (${today.length})`, ...listed(today, date));
   return lines.join('\n').trimEnd();
 }
 

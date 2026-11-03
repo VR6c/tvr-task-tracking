@@ -6,10 +6,10 @@ Built from `software_requirements_specification_srs.txt` (the source of truth).
 
 | | |
 |---|---|
-| **Frontend** | Next.js 16 (App Router, TypeScript strict), Tailwind CSS 4, lucide-react, `@telegram-apps/sdk-react` |
+| **Frontend** | Next.js 16 (App Router, TypeScript strict), Tailwind CSS 4, lucide-react, `@telegram-apps/sdk-react`, responsive desktop sidebar & mobile layout |
 | **Backend** | Next.js route handlers, Zod validation, Drizzle ORM + drizzle-kit, PostgreSQL (Neon / Supabase compatible) |
-| **Bot** | grammY webhook adapter at `app/api/bot/route.ts` |
-| **Tests** | Vitest (unit + real-database integration) |
+| **Bot** | grammY webhook adapter at `app/api/bot/route.ts` with Quick Menu & slash commands |
+| **Tests** | Vitest (11 test suites: unit + real-database integration) |
 
 ## Contents
 
@@ -22,12 +22,13 @@ Built from `software_requirements_specification_srs.txt` (the source of truth).
 7. [Local testing with a tunnel](#local-testing-with-a-tunnel)
 8. [Deploy to Vercel + Neon (≈ 20 min)](#deploy-to-vercel--neon)
 9. [Cron schedules & time zone](#cron-schedules--time-zone)
-10. [Bot message syntax](#bot-message-syntax)
-11. [API reference](#api-reference)
-12. [Testing](#testing)
-13. [Security model](#security-model)
-14. [Project layout](#project-layout)
-15. [Assumptions](#assumptions)
+10. [Quick Menu & bot commands](#quick-menu--bot-commands)
+11. [Bot message syntax](#bot-message-syntax)
+12. [API reference](#api-reference)
+13. [Testing](#testing)
+14. [Security model](#security-model)
+15. [Project layout](#project-layout)
+16. [Assumptions](#assumptions)
 
 ## Quick start (local)
 
@@ -74,6 +75,7 @@ Generate secrets with `openssl rand -hex 32`.
 | `npm run lint` | ESLint (flat config, `no-explicit-any` enforced) |
 | `npm run typecheck` | `tsc --noEmit` (strict, `noUncheckedIndexedAccess`) |
 | `npm test` | Vitest (unit tests; integration tests run when `TEST_DATABASE_URL` is set) |
+| `npm run test:watch` | Vitest interactive watch mode |
 | `npm run db:generate` | Generate a SQL migration from `db/schema.ts` |
 | `npm run db:migrate` | Apply migrations in `db/migrations` to `DATABASE_URL` |
 | `npm run db:seed` | Insert sample tasks (refuses in production; `-- --reset` replaces existing tasks) |
@@ -162,6 +164,27 @@ All user-facing logic (today's date, Monday–Sunday weeks, month boundaries) ru
 
 Cambodia has no daylight saving, so the mapping never changes. On Vercel's **Hobby** plan cron jobs run at most once per day, may fire anywhere within the scheduled hour, and a project is limited to **2** cron jobs. This project defines 3, so Hobby needs one removed from `vercel.json` (or use Pro).
 
+## Quick Menu & bot commands
+
+Sending `/start` or `/menu` pins a persistent reply keyboard under the Telegram chat input:
+
+| Button | What it does |
+|---|---|
+| **Open App** | Launches the Mini App directly (a WebApp button pointing to `/daily`) |
+| **Today's Tasks** | Replies with "List all task today (date)" — all tasks scheduled today with completion counter, details, and status |
+| **This Week** | Replies with the complete CheckinMe slide format (achievements, plan, tracking, issues, GCIN), plus an inline button to open the Weekly Review |
+| **Monthly KPIs** | Replies with the current month's 5 KPIs (actual vs. Good/Excellence targets, status) and deadline audit counts, plus an inline button to open Monthly KPIs |
+
+The same actions exist as slash commands:
+- `/start` — Send welcome message, WebApp button, and pin the Quick Menu keyboard
+- `/menu` — Re-send and re-pin the Quick Menu keyboard
+- `/today` — List today's tasks and status summary
+- `/week` — Send this week's review in CheckinMe slide format
+- `/kpi` — Send monthly KPI snapshot & deadline audit
+- `/help` — Message syntax and logging guide
+
+The keyboard is persistent and stays docked; the chat input placeholder reminds you that typing any message will log it as a new task. Button taps match on label text before the task parser runs, so button clicks are never mistakenly logged as tasks. Run `npm run bot:setup` once to register the command list with BotFather.
+
 ## Bot message syntax
 
 Any plain message to the bot becomes a task for today. Examples:
@@ -197,7 +220,9 @@ All `/api/*` Mini App routes need `Authorization: <Telegram initData raw string>
 | `GET /api/monthly/kpi?month=YYYY-MM` | — | `200 { weeksInMonth, kpis[], audit: {onTime, overDeadline}, narrative }` |
 | `POST /api/monthly/narrative` | `{ month, challenges, successStories }` | `200 { narrative }` (upsert) |
 | `POST /api/bot` | Telegram update + `X-Telegram-Bot-Api-Secret-Token` | handled by grammY |
-| `GET /api/cron/*` | `Authorization: Bearer $CRON_SECRET` | `200 { sent: true, … }` |
+| `GET /api/cron/daily-digest` | `Authorization: Bearer $CRON_SECRET` | `200 { sent: true, carryOvers, today }` |
+| `GET /api/cron/daily-report` | `Authorization: Bearer $CRON_SECRET` | `200 { sent: true, date, total, done }` |
+| `GET /api/cron/weekly-reminder` | `Authorization: Bearer $CRON_SECRET` | `200 { sent: true, weekStartDate, gcinFilled }` |
 
 | Status | `code` | Meaning |
 |---|---|---|
@@ -212,6 +237,7 @@ All `/api/*` Mini App routes need `Authorization: <Telegram initData raw string>
 
 ```bash
 npm test                      # unit tests (no database needed)
+npm run test:watch            # interactive watch mode
 ```
 
 Integration tests exercise the real route handlers, grammY webhook, cron routes and Drizzle queries against **PostgreSQL**. They are skipped unless you provide a database — **it is wiped between tests, so use a dedicated empty database**:
@@ -221,7 +247,14 @@ createdb tvr_test
 TEST_DATABASE_URL=postgres://user:pass@localhost:5432/tvr_test npm test
 ```
 
-Coverage highlights: week boundaries & ISO weeks, month rollover, KPI thresholds incl. the weekly production target, non-duplication across months, deadline audit, formatter output, bot parser (including malformed input), initData HMAC (valid / tampered / wrong token / expired / foreign user → 403), `completed_at` rules, upserts, cross-user isolation and the webhook/cron secrets.
+Coverage highlights (11 test suites, 96 tests: 71 unit + 25 integration):
+- **Week & date logic**: ISO week numbering, Monday–Sunday boundaries, month rollover, time zone safety in `Asia/Phnom_Penh`.
+- **KPI engine**: Monthly targets, dynamic weekly production-bug scaling by number of weeks in month, Good/Excellence thresholds, deadline audit counts.
+- **Bot & parser**: Hashtags (`#success`, `#done`, `#bug`, `#testflight`), build versions (`v2.5.17 build 668`), issue remarks, category/environment inference, malformed input rejection, and private user guarding.
+- **Quick Menu**: Persistent keyboard buttons, command handlers (`/start`, `/menu`, `/today`, `/week`, `/kpi`, `/help`), and ensuring button taps are never parsed as tasks.
+- **Formatters & reports**: Standup copy text, CheckinMe weekly meeting slide format, daily task list report ("List all task today") with Telegram 4000-character line chunking, Markdown escaping.
+- **Security & auth**: initData HMAC-SHA256 signature validation (valid, tampered, expired > 24 h, wrong token, foreign user ID → 403), webhook secret token verification, cron bearer secret.
+- **Database lifecycle**: Task CRUD, status toggling with `completed_at` rules, GCIN & monthly narrative upserts, cross-user isolation.
 
 Full quality gate: `npm run lint && npm run typecheck && npm test && npm run build`.
 
@@ -237,18 +270,18 @@ Full quality gate: `npm run lint && npm run typecheck && npm test && npm run bui
 ## Project layout
 
 ```
-app/                 routes: /daily /weekly /monthly + app/api/**
-components/          TaskCard, StatusToggle, KpiCard, GcinCard, PeriodNav, CopyButton, EmptyState, ErrorState, …
+app/                 routes: /daily /weekly /monthly + app/api/** (tasks, weekly, monthly, bot, cron)
+components/          TaskCard, StatusToggle, KpiCard, GcinCard, PeriodNav, CopyButton, TabBar (responsive), …
 lib/auth/            initData validation, withAuth(), webhook/cron secrets
 lib/db/              client, tasks / reviews queries, weekly + monthly views
 lib/kpi/             config.ts (ALL targets/thresholds) + engine.ts
 lib/formatters/      Markdown escaping, daily standup, weekly slide
-lib/telegram/        bot, message parser, digest texts
+lib/telegram/        bot, parser, digest, daily-report, menu, kpi-summary
 lib/client/          Telegram SDK wrapper, API client, clipboard, draft storage, autosave
 lib/week-utils.ts    Monday–Sunday / month / time-zone helpers (pure)
 db/                  schema.ts, migrations/, seed.ts
 scripts/             migrate.ts, setup-bot.ts
-tests/               Vitest unit + integration tests
+tests/               Vitest unit + integration tests (11 test suites)
 ```
 
 ## Assumptions

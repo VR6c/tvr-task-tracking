@@ -35,6 +35,10 @@ async function main(): Promise<void> {
   });
   await api.setMyCommands([
     { command: 'start', description: 'Open TVR Task Tracking' },
+    { command: 'menu', description: 'Show the quick menu buttons' },
+    { command: 'today', description: "List today's tasks" },
+    { command: 'week', description: 'This week in slide format' },
+    { command: 'kpi', description: 'Monthly KPI snapshot' },
     { command: 'help', description: 'How to log a task by message' },
   ]);
 

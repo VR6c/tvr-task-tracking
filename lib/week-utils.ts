@@ -62,6 +62,11 @@ export function todayInTimezone(now: Date = new Date(), timeZone: string = APP_T
   }).format(now);
 }
 
+/** Whole days from `from` to `to` (negative when `to` is earlier). */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((toUtc(to).getTime() - toUtc(from).getTime()) / MS_PER_DAY);
+}
+
 export function addDays(date: string, days: number): string {
   return fromUtc(new Date(toUtc(date).getTime() + days * MS_PER_DAY));
 }

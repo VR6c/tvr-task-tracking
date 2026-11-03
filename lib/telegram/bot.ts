@@ -1,10 +1,16 @@
-import { Api, Bot, InlineKeyboard, webhookCallback } from 'grammy';
+import { Api, Bot, InlineKeyboard, webhookCallback, type Context } from 'grammy';
 import { CATEGORY_LABELS, ENVIRONMENT_LABELS } from '@/lib/constants';
 import { getDb } from '@/lib/db/client';
-import { createTask } from '@/lib/db/tasks';
+import { createTask, listTasksByDate } from '@/lib/db/tasks';
+import { loadMonthlyView, loadWeeklyView } from '@/lib/db/views';
 import { getEnv } from '@/lib/env';
+import { formatWeeklySlide } from '@/lib/formatters/weekly-slide';
+import { toTaskDTO } from '@/lib/tasks';
+import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
+import { formatKpiSummary } from '@/lib/telegram/kpi-summary';
+import { MENU, buildQuickMenu } from '@/lib/telegram/menu';
 import { PARSE_HELP, parseTaskMessage } from '@/lib/telegram/parser';
-import { todayInTimezone } from '@/lib/week-utils';
+import { monthYearOf, todayInTimezone, weekRange } from '@/lib/week-utils';
 
 export function miniAppUrl(path = '/daily'): string {
   return `${getEnv().NEXT_PUBLIC_APP_URL.replace(/\/$/, '')}${path}`;
@@ -13,6 +19,8 @@ export function miniAppUrl(path = '/daily'): string {
 export function openAppKeyboard(label = 'Open Task Tracking', path = '/daily'): InlineKeyboard {
   return new InlineKeyboard().webApp(label, miniAppUrl(path));
 }
+
+const MENU_READY = 'Quick menu is ready. Use the buttons below, or just type a task to log it.';
 
 export function createBot(): Bot {
   const { BOT_TOKEN, ALLOWED_TELEGRAM_USER_ID, TELEGRAM_API_ROOT } = getEnv();
@@ -27,8 +35,36 @@ export function createBot(): Bot {
     await next();
   });
 
-  bot.command('start', (ctx) =>
-    ctx.reply(
+  const sendMenu = (ctx: Context) => ctx.reply(MENU_READY, { reply_markup: buildQuickMenu(miniAppUrl()) });
+
+  const sendTodayTasks = async (ctx: Context) => {
+    const date = todayInTimezone();
+    const rows = await listTasksByDate(getDb(), ALLOWED_TELEGRAM_USER_ID, date);
+    for (const text of chunkMessage(formatDailyTaskList(date, rows.map(toTaskDTO)))) {
+      await ctx.reply(text, { parse_mode: 'Markdown' });
+    }
+  };
+
+  const sendWeek = async (ctx: Context) => {
+    const range = weekRange(todayInTimezone());
+    const view = await loadWeeklyView(getDb(), ALLOWED_TELEGRAM_USER_ID, range.start, range.end);
+    const chunks = chunkMessage(formatWeeklySlide(range.start, view.sections, view.gcin));
+    for (const [index, text] of chunks.entries()) {
+      const isLast = index === chunks.length - 1;
+      await ctx.reply(text, {
+        parse_mode: 'Markdown',
+        ...(isLast ? { reply_markup: openAppKeyboard('Open weekly review', '/weekly') } : {}),
+      });
+    }
+  };
+
+  const sendKpis = async (ctx: Context) => {
+    const view = await loadMonthlyView(getDb(), ALLOWED_TELEGRAM_USER_ID, monthYearOf(todayInTimezone()));
+    await ctx.reply(formatKpiSummary(view), { parse_mode: 'Markdown', reply_markup: openAppKeyboard('Open KPIs', '/monthly') });
+  };
+
+  bot.command('start', async (ctx) => {
+    await ctx.reply(
       [
         '*TVR Task Tracking*',
         '',
@@ -36,10 +72,20 @@ export function createBot(): Bot {
         'You can also message me a task, e.g. `Quick Test v2.5.17 build 668 #success`.',
       ].join('\n'),
       { parse_mode: 'Markdown', reply_markup: openAppKeyboard() },
-    ),
-  );
+    );
+    await sendMenu(ctx);
+  });
 
   bot.command('help', (ctx) => ctx.reply(PARSE_HELP, { reply_markup: openAppKeyboard() }));
+
+  // Quick Menu: registered before the free-text task parser so button taps are never logged as tasks.
+  bot.command('menu', sendMenu);
+  bot.command('today', sendTodayTasks);
+  bot.command('week', sendWeek);
+  bot.command('kpi', sendKpis);
+  bot.hears(MENU.today, sendTodayTasks);
+  bot.hears(MENU.week, sendWeek);
+  bot.hears(MENU.kpi, sendKpis);
 
   bot.on('message:text', async (ctx) => {
     const parsed = parseTaskMessage(ctx.message.text);
