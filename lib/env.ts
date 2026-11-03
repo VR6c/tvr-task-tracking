@@ -7,22 +7,20 @@ const serverSchema = z.object({
   WEBHOOK_SECRET: z.string().regex(/^[A-Za-z0-9_-]{1,256}$/, 'WEBHOOK_SECRET may only contain A-Z a-z 0-9 _ -'),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   CRON_SECRET: z.string().min(8),
+  /** Optional: self-hosted Bot API server (defaults to https://api.telegram.org). */
+  TELEGRAM_API_ROOT: z.string().url().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverSchema>;
 
-let cached: ServerEnv | undefined;
-
-/** Validated server env. Lazy so `next build` works without secrets; throws a readable error at first use. */
+/** Validated server env. Read lazily so `next build` works without secrets; throws a readable error on use. */
 export function getEnv(): ServerEnv {
-  if (cached) return cached;
   const parsed = serverSchema.safeParse(process.env);
   if (!parsed.success) {
     const problems = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid environment configuration - ${problems}`);
   }
-  cached = parsed.data;
-  return cached;
+  return parsed.data;
 }
 
 export const isProduction = (): boolean => process.env.NODE_ENV === 'production';

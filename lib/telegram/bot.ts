@@ -15,8 +15,8 @@ export function openAppKeyboard(label = 'Open Task Tracking', path = '/daily'): 
 }
 
 export function createBot(): Bot {
-  const { BOT_TOKEN, ALLOWED_TELEGRAM_USER_ID } = getEnv();
-  const bot = new Bot(BOT_TOKEN);
+  const { BOT_TOKEN, ALLOWED_TELEGRAM_USER_ID, TELEGRAM_API_ROOT } = getEnv();
+  const bot = new Bot(BOT_TOKEN, { client: { apiRoot: TELEGRAM_API_ROOT } });
 
   // Single-user bot: ignore everyone else (FR-AUTH-02 applies to the bot as well).
   bot.use(async (ctx, next) => {
@@ -52,7 +52,7 @@ export function createBot(): Bot {
       return;
     }
     const { task } = parsed;
-    const row = await createTask(getDb(), ALLOWED_TELEGRAM_USER_ID, task);
+    const row = await createTask(getDb(), ALLOWED_TELEGRAM_USER_ID, { ...task, isOverDeadline: false });
     const details = [
       CATEGORY_LABELS[row.category],
       ENVIRONMENT_LABELS[row.environment],
@@ -86,5 +86,6 @@ export function getWebhookHandler(): (req: Request) => Promise<Response> {
 }
 
 export function getTelegramApi(): Api {
-  return new Api(getEnv().BOT_TOKEN);
+  const { BOT_TOKEN, TELEGRAM_API_ROOT } = getEnv();
+  return new Api(BOT_TOKEN, { apiRoot: TELEGRAM_API_ROOT });
 }

@@ -1,6 +1,9 @@
 import { createHmac } from 'node:crypto';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { NextRequest } from 'next/server';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import type { MessageEntity, Update, UserFromGetMe } from 'grammy/types';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { tasks } from '@/db/schema';
@@ -43,22 +46,36 @@ function call(path: string, init: { method?: string; auth?: string; body?: unkno
   });
 }
 
+import * as tasksRoute from '@/app/api/tasks/route';
+import * as taskRoute from '@/app/api/tasks/[id]/route';
+import * as weeklyRoute from '@/app/api/weekly/route';
+import * as gcinRoute from '@/app/api/weekly/gcin/route';
+import * as kpiRoute from '@/app/api/monthly/kpi/route';
+import * as narrativeRoute from '@/app/api/monthly/narrative/route';
+import * as botRoute from '@/app/api/bot/route';
+import * as dailyRoute from '@/app/api/cron/daily-digest/route';
+import * as weeklyReminderRoute from '@/app/api/cron/weekly-reminder/route';
+import { todayInTimezone } from '@/lib/week-utils';
+
+const ROUTES = {
+  tasks: tasksRoute,
+  task: taskRoute,
+  weekly: weeklyRoute,
+  gcin: gcinRoute,
+  kpi: kpiRoute,
+  narrative: narrativeRoute,
+  bot: botRoute,
+  daily: dailyRoute,
+  reminder: weeklyReminderRoute,
+};
+
 const noParams = { params: Promise.resolve({}) };
 const AUTH = () => signedInitData(ALLOWED);
 
 describe.skipIf(!TEST_URL)('API against a real database', () => {
   let db: Database;
   let close: () => Promise<void>;
-  let routes: {
-    tasks: typeof import('@/app/api/tasks/route');
-    task: typeof import('@/app/api/tasks/[id]/route');
-    weekly: typeof import('@/app/api/weekly/route');
-    gcin: typeof import('@/app/api/weekly/gcin/route');
-    kpi: typeof import('@/app/api/monthly/kpi/route');
-    narrative: typeof import('@/app/api/monthly/narrative/route');
-    bot: typeof import('@/app/api/bot/route');
-    daily: typeof import('@/app/api/cron/daily-digest/route');
-  };
+  let routes: typeof ROUTES;
 
   beforeAll(async () => {
     Object.assign(process.env, {
@@ -74,16 +91,7 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
     await db.execute(sql`drop schema if exists drizzle cascade`);
     await db.execute(sql`create schema public`);
     await migrate(db, { migrationsFolder: 'db/migrations' });
-    routes = {
-      tasks: await import('@/app/api/tasks/route'),
-      task: await import('@/app/api/tasks/[id]/route'),
-      weekly: await import('@/app/api/weekly/route'),
-      gcin: await import('@/app/api/weekly/gcin/route'),
-      kpi: await import('@/app/api/monthly/kpi/route'),
-      narrative: await import('@/app/api/monthly/narrative/route'),
-      bot: await import('@/app/api/bot/route'),
-      daily: await import('@/app/api/cron/daily-digest/route'),
-    };
+    routes = ROUTES;
   });
 
   beforeEach(async () => {
@@ -357,7 +365,7 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       const { createBot } = await import('@/lib/telegram/bot');
       const bot = createBot();
       const calls: Call[] = [];
-      bot.botInfo = {
+      const botInfo: UserFromGetMe = {
         id: 1,
         is_bot: true,
         first_name: 'TVR',
@@ -369,7 +377,10 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
         has_main_web_app: false,
         has_topics_enabled: false,
         allows_users_to_create_topics: false,
+        can_manage_bots: false,
+        supports_join_request_queries: false,
       };
+      bot.botInfo = botInfo;
       bot.api.config.use((_prev, method, payload) => {
         calls.push({ method, payload: payload as Record<string, unknown> });
         return Promise.resolve({ ok: true, result: true } as never);
@@ -377,12 +388,12 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       return { bot, calls };
     }
 
-    const message = (userId: number, text: string, entities?: unknown[]) => ({
+    const message = (userId: number, text: string, entities?: MessageEntity[]): Update => ({
       update_id: 1,
       message: {
         message_id: 1,
         date: Math.floor(Date.now() / 1000),
-        chat: { id: userId, type: 'private' as const, first_name: 'T' },
+        chat: { id: userId, type: 'private', first_name: 'T' },
         from: { id: userId, is_bot: false, first_name: 'T' },
         text,
         ...(entities ? { entities } : {}),
@@ -426,6 +437,95 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       await bot.handleUpdate(message(FOREIGN, 'Quick Test #success'));
       expect(await db.select().from(tasks)).toHaveLength(0);
       expect(String(calls[0]?.payload.text)).toContain('private bot');
+    });
+  });
+
+  describe('webhook and cron against the Telegram API (local fake Bot API)', () => {
+    interface Outbound {
+      method: string;
+      body: Record<string, unknown>;
+    }
+    let outbound: Outbound[];
+    let server: Server;
+
+    beforeAll(async () => {
+      // A local stand-in for api.telegram.org: records every Bot API call and answers { ok: true }.
+      server = createServer((req, res) => {
+        let raw = '';
+        req.on('data', (chunk: Buffer) => (raw += chunk.toString()));
+        req.on('end', () => {
+          const method = (req.url ?? '').split('/').pop() ?? '';
+          outbound.push({ method, body: raw ? (JSON.parse(raw) as Record<string, unknown>) : {} });
+          const result =
+            method === 'getMe'
+              ? { id: 1, is_bot: true, first_name: 'TVR', username: 'tvr_bot', can_join_groups: false, can_read_all_group_messages: false, supports_inline_queries: false }
+              : { message_id: 1, date: 1, chat: { id: ALLOWED, type: 'private' } };
+          res.setHeader('content-type', 'application/json');
+          res.end(JSON.stringify({ ok: true, result }));
+        });
+      });
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      process.env.TELEGRAM_API_ROOT = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    });
+
+    afterAll(async () => {
+      delete process.env.TELEGRAM_API_ROOT;
+      await new Promise((resolve) => server.close(resolve));
+    });
+
+    beforeEach(() => {
+      outbound = [];
+    });
+
+
+    it('POST /api/bot with the secret token inserts the task and replies', async () => {
+      const res = await routes.bot.POST(
+        new Request('http://localhost/api/bot', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-telegram-bot-api-secret-token': WEBHOOK_SECRET },
+          body: JSON.stringify({
+            update_id: 7,
+            message: {
+              message_id: 3,
+              date: Math.floor(Date.now() / 1000),
+              chat: { id: ALLOWED, type: 'private', first_name: 'T' },
+              from: { id: ALLOWED, is_bot: false, first_name: 'T' },
+              text: 'Quick Test v2.5.17 build 668 #success',
+            },
+          }),
+        }),
+      );
+      expect(res.status).toBe(200);
+      const rows = await db.select().from(tasks);
+      expect(rows.map((r) => [r.title, r.status])).toEqual([['Quick Test v2.5.17 build 668', 'Success']]);
+      expect(outbound.some((c) => c.method === 'sendMessage' && String(c.body.text).includes('Logged'))).toBe(true);
+    });
+
+    it('daily digest cron lists carry-over tasks and links to the Mini App', async () => {
+      await createTask({ title: 'Carry me', category: 'quick_test', status: 'Feedback', scheduledDate: '2026-10-01' });
+      await createTask({ title: 'Finished', category: 'quick_test', status: 'Done', scheduledDate: '2026-10-01' });
+      const res = await routes.daily.GET(
+        new Request('http://localhost/api/cron/daily-digest', { headers: { authorization: `Bearer ${CRON_SECRET}` } }),
+      );
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ sent: true, carryOvers: 1 });
+      const sent = outbound.find((c) => c.method === 'sendMessage');
+      expect(sent?.body.chat_id).toBe(ALLOWED);
+      expect(String(sent?.body.text)).toContain('Carry me');
+      expect(String(sent?.body.text)).not.toContain('Finished');
+      expect(JSON.stringify(sent?.body.reply_markup)).toContain('https://app.example.com/daily');
+    });
+
+    it('weekly reminder cron reports GCIN progress and links to /weekly', async () => {
+      await createTask({ title: 'This week', category: 'quick_test', status: 'Done', scheduledDate: todayInTimezone() });
+      const res = await routes.reminder.GET(
+        new Request('http://localhost/api/cron/weekly-reminder', { headers: { authorization: `Bearer ${CRON_SECRET}` } }),
+      );
+      expect(res.status).toBe(200);
+      const sent = outbound.find((c) => c.method === 'sendMessage');
+      expect(String(sent?.body.text)).toContain('GCIN');
+      expect(String(sent?.body.text)).toContain('GCIN entries recorded: 0/4');
+      expect(JSON.stringify(sent?.body.reply_markup)).toContain('https://app.example.com/weekly');
     });
   });
 });
