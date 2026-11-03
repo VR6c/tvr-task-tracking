@@ -23,7 +23,7 @@ export function GcinCard({ letter, title, hint, accent, value, onChange }: GcinC
   const id = useId();
   const style = ACCENT[accent];
   return (
-    <div className={cn('rounded-xl border border-separator border-l-4 bg-surface p-3', style.border)}>
+    <div className={cn('rounded-lg border border-separator border-l-4 bg-surface p-3', style.border)}>
       <label htmlFor={id} className="flex items-baseline gap-2">
         <span className={cn('text-lg font-bold', style.text)}>{letter}</span>
         <span className="text-sm font-semibold">{title}</span>

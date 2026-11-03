@@ -6,7 +6,7 @@ import type { DeadlineAudit, TaskDTO } from '@/types/api';
 function AuditList({ title, tasks, tone }: { title: string; tasks: readonly TaskDTO[]; tone: 'ok' | 'danger' }) {
   const Icon = tone === 'ok' ? CheckCircle2 : Clock4;
   return (
-    <details className="rounded-xl border border-separator bg-surface" open={tasks.length > 0 && tasks.length <= 5}>
+    <details className="rounded-lg border border-separator bg-surface" open={tasks.length > 0 && tasks.length <= 5}>
       <summary className="flex min-h-12 cursor-pointer items-center gap-2 px-3 text-sm font-semibold">
         <Icon aria-hidden className={tone === 'ok' ? 'size-4 text-ok' : 'size-4 text-danger'} />
         {title}

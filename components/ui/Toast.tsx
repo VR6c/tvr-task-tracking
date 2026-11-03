@@ -39,12 +39,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         role="status"
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] md:bottom-8 z-50 flex justify-center px-4"
       >
         {toast && (
           <div
             key={toast.id}
-            className="flex max-w-[22rem] items-center gap-2 rounded-lg bg-fg px-3.5 py-2.5 text-sm font-medium text-bg shadow-sm"
+            className="flex max-w-[22rem] items-center gap-2 rounded-md bg-fg px-3.5 py-2.5 text-sm font-medium text-bg"
           >
             <Icon aria-hidden className="size-4 shrink-0" />
             {toast.message}

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Providers } from '@/components/Providers';
 import { TabBar } from '@/components/TabBar';
+import { PAGE_GUTTER, PAGE_WIDTH } from '@/lib/layout';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -21,10 +22,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
-          <main className="mx-auto min-h-dvh w-full max-w-[480px] px-4 pb-[calc(9.5rem+env(safe-area-inset-bottom))]">
+          <TabBar />
+          <main
+            className={`mx-auto min-h-dvh w-full ${PAGE_WIDTH} ${PAGE_GUTTER} pb-[calc(9.5rem+env(safe-area-inset-bottom))] md:min-h-[calc(100dvh-3.5rem)] md:pb-12`}
+          >
             {children}
           </main>
-          <TabBar />
         </Providers>
       </body>
     </html>

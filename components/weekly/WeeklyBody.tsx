@@ -40,22 +40,26 @@ export function WeeklyBody({ view }: { view: WeeklyResponse }) {
 
   return (
     <>
-      <div className="space-y-3">
-        <h2 className="text-base font-bold">This week&apos;s tasks</h2>
-        <WeeklySectionList title="Last Week Achievement" icon={CheckCheck} tasks={sections.achievements} emptyText="Nothing marked Done or Success yet." />
-        <WeeklySectionList title="Plan in This Week" icon={ListTodo} tasks={sections.plan} emptyText="No pending or carried-over tasks." />
-        <WeeklySectionList title="Tracking Owner Confirm Task" icon={ClipboardCheck} tasks={sections.tracking} emptyText="No TestFlight builds or milestone sign-offs." />
-        <WeeklySectionList title="Issue Found Register" icon={AlertOctagon} tasks={sections.issues} emptyText="No issues logged." showRemark />
-      </div>
-
-      <div className="mt-6 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-base font-bold">GCIN retrospective</h2>
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-3">
+          <h2 className="text-base font-bold">This week&apos;s tasks</h2>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
+            <WeeklySectionList title="Last Week Achievement" icon={CheckCheck} tasks={sections.achievements} emptyText="Nothing marked Done or Success yet." />
+            <WeeklySectionList title="Plan in This Week" icon={ListTodo} tasks={sections.plan} emptyText="No pending or carried-over tasks." />
+            <WeeklySectionList title="Tracking Owner Confirm Task" icon={ClipboardCheck} tasks={sections.tracking} emptyText="No TestFlight builds or milestone sign-offs." />
+            <WeeklySectionList title="Issue Found Register" icon={AlertOctagon} tasks={sections.issues} emptyText="No issues logged." showRemark />
+          </div>
         </div>
-        {GCIN_FIELDS.map(({ field, ...card }) => (
-          <GcinCard key={field} {...card} value={gcin.value[field]} onChange={(text) => gcin.update({ ...gcin.value, [field]: text })} />
-        ))}
-        <SaveStatus status={gcin.status} error={gcin.error} onRetry={gcin.retry} />
+
+        <div className="space-y-3 lg:sticky lg:top-20">
+          <h2 className="text-base font-bold">GCIN retrospective</h2>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            {GCIN_FIELDS.map(({ field, ...card }) => (
+              <GcinCard key={field} {...card} value={gcin.value[field]} onChange={(text) => gcin.update({ ...gcin.value, [field]: text })} />
+            ))}
+          </div>
+          <SaveStatus status={gcin.status} error={gcin.error} onRetry={gcin.retry} />
+        </div>
       </div>
 
       <StickyAction>

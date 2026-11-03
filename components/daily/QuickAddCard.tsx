@@ -35,7 +35,7 @@ interface QuickAddCardProps {
   onAdd: (payload: NewTaskPayload) => Promise<boolean>;
 }
 
-/** Title, category, environment and status are always visible; build version and issue remark sit under "More". */
+/** Title + chips stay visible; build version and issue remark sit under a disclosure to keep the card short. */
 export function QuickAddCard({ onAdd }: QuickAddCardProps) {
   // Mounted only after hydration (the parent waits for the client-side date), so reading storage here is safe.
   const [form, setForm] = useState<FormState>(() => ({ ...INITIAL, ...readDraft<Partial<FormState>>(DRAFT_KEY)?.value }));
@@ -53,7 +53,7 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
     if (!title || submitting) return;
     setSubmitting(true);
     const snapshot = form;
-    // Keep the user's chosen chips for the next task; clear only the free text.
+    // Keep the chosen chips for the next task; clear only the free text.
     const cleared = { ...form, title: '', buildVersion: '', issueRemark: '', status: 'Feedback' as const };
     setForm(cleared);
     writeDraft(DRAFT_KEY, { value: cleared, dirty: true });
@@ -74,34 +74,26 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} aria-label="Quick add task" className="space-y-3 rounded-xl border border-separator bg-surface p-3">
+    <form onSubmit={(e) => void submit(e)} aria-label="Quick add task" className="space-y-3 rounded-lg border border-separator bg-surface p-3">
       <TextField
         label="Task title"
+        hideLabel
         value={form.title}
         maxLength={TITLE_MAX_LENGTH}
         enterKeyHint="done"
-        placeholder="[Product Team] Zoom QR when scan"
+        placeholder="Task title, e.g. [Product Team] Zoom QR when scan"
         onChange={(e) => update({ title: e.target.value })}
       />
-      <FieldGroup label="Category">
-        <ChipGroup label="Category" options={CATEGORY_OPTIONS} value={form.category} onChange={(category) => update({ category })} />
-      </FieldGroup>
-      <FieldGroup label="Environment">
-        <ChipGroup label="Environment" options={ENVIRONMENT_OPTIONS} value={form.environment} onChange={(environment) => update({ environment })} />
-      </FieldGroup>
-      <FieldGroup label="Status">
-        <ChipGroup label="Status" options={STATUS_OPTIONS} value={form.status} onChange={(status) => update({ status })} />
-      </FieldGroup>
+      <ChipGroup label="Category" options={CATEGORY_OPTIONS} value={form.category} onChange={(category) => update({ category })} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+        <FieldGroup label="Environment">
+          <ChipGroup variant="segmented" label="Environment" options={ENVIRONMENT_OPTIONS} value={form.environment} onChange={(environment) => update({ environment })} />
+        </FieldGroup>
+        <FieldGroup label="Status">
+          <ChipGroup variant="segmented" label="Status" options={STATUS_OPTIONS} value={form.status} onChange={(status) => update({ status })} />
+        </FieldGroup>
+      </div>
 
-      <button
-        type="button"
-        aria-expanded={form.expanded}
-        onClick={() => update({ expanded: !form.expanded })}
-        className="flex min-h-11 items-center gap-1 text-sm font-medium text-link"
-      >
-        <ChevronDown aria-hidden className={cn('size-4 transition-transform', form.expanded && 'rotate-180')} />
-        Build version &amp; issue remark
-      </button>
       {form.expanded && (
         <div className="space-y-3">
           <TextField
@@ -120,14 +112,25 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={!form.title.trim() || submitting}
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent text-[15px] font-semibold text-accent-fg disabled:opacity-50"
-      >
-        <Plus aria-hidden className="size-5" />
-        Add task
-      </button>
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          aria-expanded={form.expanded}
+          onClick={() => update({ expanded: !form.expanded })}
+          className="flex min-h-11 items-center gap-1 text-sm font-medium text-link"
+        >
+          <ChevronDown aria-hidden className={cn('size-4 transition-transform', form.expanded && 'rotate-180')} />
+          Build &amp; issue
+        </button>
+        <button
+          type="submit"
+          disabled={!form.title.trim() || submitting}
+          className="flex min-h-11 items-center gap-1.5 rounded-md bg-accent px-5 text-[15px] font-semibold text-accent-fg disabled:opacity-50"
+        >
+          <Plus aria-hidden className="size-4" />
+          Add task
+        </button>
+      </div>
     </form>
   );
 }

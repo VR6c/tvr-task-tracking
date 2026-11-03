@@ -2,13 +2,18 @@ import { useId, type InputHTMLAttributes, type TextareaHTMLAttributes } from 're
 import { cn } from '@/lib/cn';
 
 const control =
-  'w-full rounded-lg border border-separator bg-bg px-3 text-[15px] placeholder:text-hint/70 focus-visible:border-accent';
+  'w-full rounded-md border border-separator bg-bg px-3 text-[15px] placeholder:text-hint/70 focus-visible:border-accent';
 
-export function TextField({ label, className, ...props }: InputHTMLAttributes<HTMLInputElement> & { label: string }) {
+export function TextField({
+  label,
+  hideLabel,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; hideLabel?: boolean }) {
   const id = useId();
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-xs font-medium text-hint">
+      <label htmlFor={id} className={cn('mb-1 block text-xs font-medium text-hint', hideLabel && 'sr-only')}>
         {label}
       </label>
       <input id={id} {...props} className={cn(control, 'min-h-11', className)} />

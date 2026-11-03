@@ -13,7 +13,7 @@ interface WeeklySectionListProps {
 
 export function WeeklySectionList({ title, icon: Icon, tasks, emptyText, showRemark }: WeeklySectionListProps) {
   return (
-    <section aria-label={title} className="rounded-xl border border-separator bg-surface p-3">
+    <section aria-label={title} className="rounded-lg border border-separator bg-surface p-3">
       <h3 className="flex items-center gap-2 text-sm font-semibold">
         <Icon aria-hidden className="size-4 text-accent" />
         {title}

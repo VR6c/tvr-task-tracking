@@ -8,15 +8,16 @@ interface PeriodNavProps {
   onPrev: () => void;
   onNext: () => void;
   nextDisabled?: boolean;
+  className?: string;
 }
 
 const arrow =
-  'grid size-11 shrink-0 place-items-center rounded-lg bg-surface text-fg disabled:opacity-40 active:opacity-70';
+  'grid size-11 shrink-0 place-items-center rounded-md bg-surface text-fg disabled:opacity-40 active:opacity-70';
 
 /** Prev / label / next control shared by the date, week and month selectors. */
-export function PeriodNav({ label, prevLabel, nextLabel, onPrev, onNext, nextDisabled }: PeriodNavProps) {
+export function PeriodNav({ label, prevLabel, nextLabel, onPrev, onNext, nextDisabled, className }: PeriodNavProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className={`flex items-center gap-2 ${className ?? ''}`}>
       <button type="button" aria-label={prevLabel} onClick={onPrev} className={arrow}>
         <ChevronLeft aria-hidden className="size-5" />
       </button>

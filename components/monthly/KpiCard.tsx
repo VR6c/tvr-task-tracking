@@ -16,10 +16,10 @@ export function KpiCard({ kpi, weeksInMonth }: { kpi: KpiItemResult; weeksInMont
   const goodMark = (kpi.good / kpi.excellence) * 100;
 
   return (
-    <li className="rounded-xl border border-separator bg-surface p-3">
+    <li className="rounded-lg border border-separator bg-surface p-3">
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-sm font-semibold leading-snug">{kpi.label}</h3>
-        <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold', style.badge)}>
+        <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold', style.badge)}>
           <Icon aria-hidden className="size-3.5" />
           {KPI_STATUS_LABELS[kpi.status]}
         </span>

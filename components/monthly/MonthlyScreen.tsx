@@ -36,6 +36,7 @@ export function MonthlyScreen() {
       <ScreenHeader title="Monthly KPI" subtitle="2026 individual targets">
         {month && currentMonth && (
           <PeriodNav
+            className="md:max-w-sm"
             label={
               <>
                 <label htmlFor={selectId} className="sr-only">
@@ -68,14 +69,16 @@ export function MonthlyScreen() {
       ) : resource.loading || !resource.data ? (
         <SkeletonList rows={5} label="Loading monthly KPIs" />
       ) : (
-        <div className="space-y-6">
-          <ul aria-label="KPI results" className="space-y-3">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
+          <ul aria-label="KPI results" className="grid gap-3 md:grid-cols-2">
             {resource.data.kpis.map((kpi) => (
               <KpiCard key={kpi.key} kpi={kpi} weeksInMonth={resource.data?.weeksInMonth ?? 4} />
             ))}
           </ul>
-          <AuditSection audit={resource.data.audit} />
-          <NarrativeBlocks key={resource.data.month} month={resource.data.month} server={resource.data.narrative} />
+          <div className="space-y-8">
+            <AuditSection audit={resource.data.audit} />
+            <NarrativeBlocks key={resource.data.month} month={resource.data.month} server={resource.data.narrative} />
+          </div>
         </div>
       )}
     </>

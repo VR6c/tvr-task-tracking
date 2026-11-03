@@ -39,7 +39,7 @@ export function DailyScreen() {
           resource.data && (
             <span
               aria-label={`${countCompleted(tasks)} of ${tasks.length} tasks done`}
-              className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-ok/15 px-3 text-sm font-semibold text-ok"
+              className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-md bg-ok/15 px-3 text-sm font-semibold text-ok"
             >
               <CalendarCheck aria-hidden className="size-4" />
               {countCompleted(tasks)}/{tasks.length} Tasks Done
@@ -48,6 +48,7 @@ export function DailyScreen() {
         }
       >
         <PeriodNav
+          className="md:max-w-sm"
           label={
             isToday ? (
               'Today'
@@ -64,15 +65,19 @@ export function DailyScreen() {
         />
       </ScreenHeader>
 
-      <div className="space-y-5">
-        <QuickAddCard onAdd={addTask} />
-        {resource.error ? (
-          <ErrorState message={resource.error} onRetry={resource.reload} />
-        ) : resource.loading || !resource.data ? (
-          <SkeletonList label="Loading tasks" />
-        ) : (
-          <TaskFeed tasks={tasks} onStatusChange={(t, s) => void changeStatus(t, s)} onEdit={(t) => setEditingId(t.id)} />
-        )}
+      <div className="space-y-5 lg:grid lg:grid-cols-[21rem_minmax(0,1fr)] lg:items-start lg:gap-8 lg:space-y-0">
+        <div className="lg:sticky lg:top-20">
+          <QuickAddCard onAdd={addTask} />
+        </div>
+        <div>
+          {resource.error ? (
+            <ErrorState message={resource.error} onRetry={resource.reload} />
+          ) : resource.loading || !resource.data ? (
+            <SkeletonList label="Loading tasks" />
+          ) : (
+            <TaskFeed tasks={tasks} onStatusChange={(t, s) => void changeStatus(t, s)} onEdit={(t) => setEditingId(t.id)} />
+          )}
+        </div>
       </div>
 
       <StickyAction>

@@ -44,7 +44,7 @@ export function CopyButton({ label, getText, successMessage, disabled }: CopyBut
         disabled={disabled}
         onClick={() => void handleCopy()}
         className={cn(
-          'flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-[15px] font-semibold shadow-sm transition-opacity',
+          'flex min-h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-[15px] font-semibold transition-opacity',
           'bg-accent text-accent-fg disabled:opacity-50',
         )}
       >
@@ -52,8 +52,8 @@ export function CopyButton({ label, getText, successMessage, disabled }: CopyBut
         {copied ? 'Copied' : label}
       </button>
       {manualText !== null && (
-        <div role="dialog" aria-modal="true" aria-label="Copy manually" className="fixed inset-0 z-50 flex items-end bg-black/50">
-          <div className="mx-auto w-full max-w-[480px] rounded-t-2xl bg-bg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div role="dialog" aria-modal="true" aria-label="Copy manually" className="fixed inset-0 z-50 flex items-end bg-black/50 md:items-center md:justify-center md:p-6">
+          <div className="mx-auto w-full max-w-[480px] rounded-t-lg bg-bg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:max-w-lg md:rounded-lg md:pb-4">
             <p className="mb-2 text-sm text-hint">Your device blocked automatic copy. Select the text below and copy it.</p>
             <textarea
               readOnly

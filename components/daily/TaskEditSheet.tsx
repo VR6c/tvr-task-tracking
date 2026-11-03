@@ -79,14 +79,14 @@ export function TaskEditSheet({ task, onSave, onClose }: TaskEditSheetProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end bg-black/50" onKeyDown={trapFocus} onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end bg-black/50 md:items-center md:justify-center md:p-6" onKeyDown={trapFocus} onClick={onClose}>
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-label="Edit task"
         onClick={(e) => e.stopPropagation()}
-        className="mx-auto max-h-[92dvh] w-full max-w-[480px] overflow-y-auto rounded-t-2xl bg-bg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        className="mx-auto max-h-[92dvh] w-full max-w-[480px] overflow-y-auto rounded-t-lg bg-bg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:max-w-lg md:rounded-lg md:pb-4"
       >
         <form onSubmit={(e) => void submit(e)} className="space-y-3">
           <h2 className="text-lg font-bold">Edit task</h2>
@@ -120,14 +120,14 @@ export function TaskEditSheet({ task, onSave, onClose }: TaskEditSheetProps) {
                 clearDraft(remarkKey);
                 onClose();
               }}
-              className="min-h-12 flex-1 rounded-xl bg-surface text-[15px] font-semibold"
+              className="min-h-12 flex-1 rounded-lg bg-surface text-[15px] font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!title.trim() || saving}
-              className="min-h-12 flex-1 rounded-xl bg-accent text-[15px] font-semibold text-accent-fg disabled:opacity-50"
+              className="min-h-12 flex-1 rounded-lg bg-accent text-[15px] font-semibold text-accent-fg disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>

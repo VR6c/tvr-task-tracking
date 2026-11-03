@@ -23,7 +23,7 @@ export function TaskCard({ task, onStatusChange, onEdit }: TaskCardProps) {
   const meta = [CATEGORY_LABELS[task.category], ENVIRONMENT_LABELS[task.environment], task.buildVersion].filter(Boolean);
 
   return (
-    <li className="relative overflow-hidden rounded-xl">
+    <li className="relative overflow-hidden rounded-lg">
       <div
         aria-hidden
         className={cn('absolute inset-0 flex items-center justify-end gap-2 pr-4 text-sm font-semibold', upcomingSoft, upcomingText)}
@@ -36,7 +36,7 @@ export function TaskCard({ task, onStatusChange, onEdit }: TaskCardProps) {
         {...swipe.handlers}
         style={{ transform: `translateX(${swipe.offset}px)`, touchAction: 'pan-y' }}
         className={cn(
-          'relative flex items-start gap-2 rounded-xl border border-separator bg-surface p-3 transition-transform',
+          'relative flex items-start gap-2 rounded-lg border border-separator bg-surface p-3 transition-transform',
           swipe.offset === 0 ? 'duration-200' : 'duration-0',
           pending && 'opacity-70',
         )}

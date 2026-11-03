@@ -11,7 +11,7 @@ type Narrative = MonthlyResponse['narrative'];
 function NarrativeField({ label, hint, value, onChange }: { label: string; hint: string; value: string; onChange: (v: string) => void }) {
   const id = useId();
   return (
-    <div className="rounded-xl border border-separator bg-surface p-3">
+    <div className="rounded-lg border border-separator bg-surface p-3">
       <label htmlFor={id} className="text-sm font-semibold">
         {label}
       </label>
