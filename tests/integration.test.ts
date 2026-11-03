@@ -55,6 +55,7 @@ import * as narrativeRoute from '@/app/api/monthly/narrative/route';
 import * as botRoute from '@/app/api/bot/route';
 import * as dailyRoute from '@/app/api/cron/daily-digest/route';
 import * as weeklyReminderRoute from '@/app/api/cron/weekly-reminder/route';
+import * as dailyReportRoute from '@/app/api/cron/daily-report/route';
 import { todayInTimezone } from '@/lib/week-utils';
 
 const ROUTES = {
@@ -67,6 +68,7 @@ const ROUTES = {
   bot: botRoute,
   daily: dailyRoute,
   reminder: weeklyReminderRoute,
+  report: dailyReportRoute,
 };
 
 const noParams = { params: Promise.resolve({}) };
@@ -514,6 +516,30 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       expect(String(sent?.body.text)).toContain('Carry me');
       expect(String(sent?.body.text)).not.toContain('Finished');
       expect(JSON.stringify(sent?.body.reply_markup)).toContain('https://app.example.com/daily');
+    });
+
+    it('daily report cron sends "List all task today (date)" with every task of the day', async () => {
+      const today = todayInTimezone();
+      await createTask({ title: 'Morning smoke', category: 'quick_test', status: 'Done', scheduledDate: today });
+      await createTask({ title: 'Zoom QR', category: 'milestone_feature', status: 'Feedback', scheduledDate: today });
+      await createTask({ title: 'Yesterday only', category: 'quick_test', status: 'Done', scheduledDate: '2026-01-05' });
+
+      const denied = await routes.report.GET(new Request('http://localhost/api/cron/daily-report'));
+      expect(denied.status).toBe(401);
+
+      const res = await routes.report.GET(
+        new Request('http://localhost/api/cron/daily-report', { headers: { authorization: `Bearer ${CRON_SECRET}` } }),
+      );
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ sent: true, tasks: 2, messages: 1 });
+      const sent = outbound.find((c) => c.method === 'sendMessage');
+      const text = String(sent?.body.text);
+      expect(sent?.body.chat_id).toBe(ALLOWED);
+      expect(text).toContain('*List all task today (');
+      expect(text).toContain('1/2 tasks done');
+      expect(text).toContain('Morning smoke');
+      expect(text).toContain('Zoom QR');
+      expect(text).not.toContain('Yesterday only');
     });
 
     it('weekly reminder cron reports GCIN progress and links to /weekly', async () => {

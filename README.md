@@ -126,6 +126,7 @@ Trigger the cron routes manually:
 
 ```bash
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/daily-digest
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/daily-report
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/weekly-reminder
 ```
 
@@ -156,9 +157,10 @@ All user-facing logic (today's date, Monday–Sunday weeks, month boundaries) ru
 | Digest | Local time (Asia/Phnom_Penh) | `vercel.json` (UTC) | Route |
 |---|---|---|---|
 | Daily digest | every day 08:30 | `30 1 * * *` | `/api/cron/daily-digest` |
-| Weekly GCIN reminder | Friday 16:00 | `0 9 * * 5` | `/api/cron/weekly-reminder` |
+| Daily task report ("List all task today (date)") | every day 17:00 | `0 10 * * *` | `/api/cron/daily-report` |
+| Weekly GCIN reminder | Saturday 10:00 | `0 3 * * 6` | `/api/cron/weekly-reminder` |
 
-Cambodia has no daylight saving, so the mapping never changes. On Vercel's **Hobby** plan cron jobs run at most once per day and may fire anywhere within the scheduled hour; use Pro for exact-minute delivery.
+Cambodia has no daylight saving, so the mapping never changes. On Vercel's **Hobby** plan cron jobs run at most once per day, may fire anywhere within the scheduled hour, and a project is limited to **2** cron jobs. This project defines 3, so Hobby needs one removed from `vercel.json` (or use Pro).
 
 ## Bot message syntax
 

@@ -27,7 +27,7 @@ export function formatDailyDigest(date: string, carryOvers: readonly TaskDTO[], 
   return lines.join('\n').trimEnd();
 }
 
-/** FR-BOT-03: Friday 16:00 reminder to record GCIN. */
+/** FR-BOT-03: weekly reminder (Saturday 10:00) to record GCIN. */
 export function formatWeeklyReminder(view: WeeklyResponse): string {
   const range = weekRange(view.weekStartDate);
   const filled = Object.values(view.gcin).filter((v) => v.trim().length > 0).length;

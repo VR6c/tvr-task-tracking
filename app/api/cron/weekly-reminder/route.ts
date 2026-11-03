@@ -10,7 +10,7 @@ import { todayInTimezone, weekRange } from '@/lib/week-utils';
 
 export const dynamic = 'force-dynamic';
 
-/** Friday 16:00 Asia/Phnom_Penh = 09:00 UTC (vercel.json). */
+/** Saturday 10:00 Asia/Phnom_Penh = 03:00 UTC Saturday (vercel.json). */
 export async function GET(req: Request): Promise<Response> {
   try {
     assertCronSecret(req);
