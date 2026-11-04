@@ -12,12 +12,21 @@ export class ApiClientError extends Error {
   }
 }
 
-function authorization(): string {
+/** initData inside Telegram; in a normal browser no header, so the server falls back to the session cookie. */
+function authorization(): Record<string, string> {
   const raw = getRawInitData();
-  if (raw) return raw;
+  if (raw) return { Authorization: raw };
   // Replaced at build time; the branch is removed from production bundles.
-  if (process.env.NODE_ENV !== 'production') return 'dev-mock';
-  throw new ApiClientError('Open this app from Telegram to continue.', 'NO_TELEGRAM', 0);
+  if (process.env.NODE_ENV !== 'production') return { Authorization: 'dev-mock' };
+  return {};
+}
+
+/** Browser without a valid session: send the user to the Telegram login page, then back here. */
+function redirectToLogin(): void {
+  if (typeof window === 'undefined' || getRawInitData() || window.location.pathname === '/login') return;
+  const next = window.location.pathname + window.location.search;
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full reload resets auth state
+  window.location.href = `/login?next=${encodeURIComponent(next)}`;
 }
 
 export interface RequestOptions {
@@ -33,7 +42,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
       method: options.method ?? 'GET',
       signal: options.signal,
       headers: {
-        Authorization: authorization(),
+        ...authorization(),
         ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
@@ -45,6 +54,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   }
 
   if (!response.ok) {
+    if (response.status === 401) redirectToLogin();
     const body = (await response.json().catch(() => null)) as Partial<ApiErrorBody> | null;
     const message =
       response.status === 403

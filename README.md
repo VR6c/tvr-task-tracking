@@ -161,6 +161,14 @@ The **Admin** tab (`/admin`) controls the bot from inside the Mini App. The admi
 - **Scheduled messages**: send the daily digest, daily report or weekly reminder now.
 - **Tasks**: search by title and delete tasks.
 
+### Web admin (normal browser)
+
+Open `https://<your-app>/admin` in any browser. Without a session you are sent to `/login`, which shows the **Log in with Telegram** button. Only `ALLOWED_TELEGRAM_USER_ID` is accepted; a successful login sets a 7-day httpOnly cookie (`tvr_session`, signed with a key derived from `BOT_TOKEN`, so rotating the token logs every browser out). The Daily/Weekly/Monthly tabs work in the browser too. **Log out** is in the Admin header.
+
+One-time setup: in @BotFather send `/setdomain`, pick the bot and enter your app's domain (e.g. `your-app.vercel.app`, no `https://`). The login widget only renders on that domain, so it does not work on `localhost`; use the deployed URL or your tunnel domain. In `next dev` the browser still uses the `dev-mock` header, so no login is needed locally.
+
+Cookie-authenticated writes (POST/PATCH/DELETE) must carry this app's own `Origin`; cross-site requests get 403.
+
 ## Google Sheets sync (optional)
 
 Sends the daily task list to a Google Sheet. Each task is one row keyed by its Task ID (last column), so changing a status updates the same row; new tasks are appended. The current month is synced daily at 17:15 Phnom Penh (`/api/cron/sheets-sync`) and on demand from **Admin → Scheduled jobs → Google Sheets sync**. Tasks deleted in the app are not removed from the Sheet.

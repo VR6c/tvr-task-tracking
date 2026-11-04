@@ -16,6 +16,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
 /** Bottom tab bar on phones; becomes a sticky top bar from the tablet breakpoint up. */
 export function TabBar() {
   const pathname = usePathname();
+  if (pathname === '/login') return null;
   return (
     <nav
       aria-label="Primary"
