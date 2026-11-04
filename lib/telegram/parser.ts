@@ -123,5 +123,7 @@ export const PARSE_HELP = [
   'Zoom QR fails on scan #bug issue: camera permission loop',
   'Weekly regression checklist #research #done',
   '',
+  'Holiday / leave: today holiday · tomorrow leave · leave 2h · leave morning · leave afternoon · leave full day 10 nov',
+  '',
   'Tags: #success #done #feedback · #dev #testflight #prod · #bug #feature #idea #research',
 ].join('\n');

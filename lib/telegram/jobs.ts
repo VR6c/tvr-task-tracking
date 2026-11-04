@@ -1,9 +1,11 @@
 import { getDb } from '@/lib/db/client';
+import { listDayOffsByMonth } from '@/lib/db/day-offs';
 import { listCarryOvers, listOpenToday, listTasksByDate, listTasksByMonth } from '@/lib/db/tasks';
 import { loadWeeklyView } from '@/lib/db/views';
 import { getEnv } from '@/lib/env';
 import { toTaskDTO } from '@/lib/tasks';
 import { syncTasksToSheet } from '@/lib/sheets/daily-tasks';
+import { syncTasksToMonthlySheet } from '@/lib/sheets/monthly-tasklist';
 import { getTelegramApi, openAppKeyboard } from '@/lib/telegram/bot';
 import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
 import { formatDailyDigest, formatWeeklyReminder } from '@/lib/telegram/digest';
@@ -60,11 +62,17 @@ async function weeklyReminder(userId: number) {
   return { sent: true, weekStart: range.start };
 }
 
-/** Upserts this month's tasks into the Google Sheet (rows keyed by task ID). */
+/** Upserts this month's tasks into the Google Sheet (rows keyed by task ID),
+ *  and appends new tasks into the monthly tasklist tab (calendar-style layout). */
 async function sheetsSync(userId: number) {
   const month = monthYearOf(todayInTimezone());
   const tasks = (await listTasksByMonth(getDb(), userId, month)).map(toTaskDTO);
-  return { month, tasks: tasks.length, ...(await syncTasksToSheet(tasks)) };
+  const dayOffs = await listDayOffsByMonth(getDb(), userId, month);
+  const [daily, monthly] = await Promise.all([
+    syncTasksToSheet(tasks),
+    syncTasksToMonthlySheet(tasks, month, dayOffs),
+  ]);
+  return { month, tasks: tasks.length, daily, monthly };
 }
 
 const RUNNERS: Record<JobKey, (userId: number) => Promise<Record<string, unknown>>> = {

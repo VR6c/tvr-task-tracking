@@ -1,11 +1,13 @@
 import { Api, Bot, InlineKeyboard, webhookCallback, type Context } from 'grammy';
 import { CATEGORY_LABELS, ENVIRONMENT_LABELS } from '@/lib/constants';
 import { getDb } from '@/lib/db/client';
+import { upsertDayOff } from '@/lib/db/day-offs';
 import { createTask, listTasksByDate } from '@/lib/db/tasks';
 import { loadMonthlyView, loadWeeklyView } from '@/lib/db/views';
 import { getEnv } from '@/lib/env';
 import { formatWeeklySlide } from '@/lib/formatters/weekly-slide';
 import { toTaskDTO } from '@/lib/tasks';
+import { dayOffLabel, parseDayOffMessage } from '@/lib/telegram/day-off';
 import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
 import { formatKpiSummary } from '@/lib/telegram/kpi-summary';
 import { MENU, buildQuickMenu } from '@/lib/telegram/menu';
@@ -88,6 +90,13 @@ export function createBot(): Bot {
   bot.hears(MENU.kpi, sendKpis);
 
   bot.on('message:text', async (ctx) => {
+    // "today holiday", "tomorrow leave morning", "leave 2h" ... are day-off notes, not tasks.
+    const dayOff = parseDayOffMessage(ctx.message.text, todayInTimezone());
+    if (dayOff) {
+      await upsertDayOff(getDb(), ALLOWED_TELEGRAM_USER_ID, dayOff);
+      await ctx.reply(`Noted: ${dayOffLabel(dayOff.kind, dayOff.detail)} on ${dayOff.date}. It will show in the Google Sheet at the next sync.`);
+      return;
+    }
     const parsed = parseTaskMessage(ctx.message.text);
     if (!parsed.ok) {
       const text =

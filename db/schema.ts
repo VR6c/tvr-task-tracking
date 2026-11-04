@@ -83,6 +83,24 @@ export const monthlySummaries = pgTable(
   (t) => [unique('monthly_summaries_user_month_unique').on(t.telegramUserId, t.monthYear)],
 );
 
+export const DAY_OFF_KINDS = ['holiday', 'leave'] as const;
+
+/** A holiday or leave day, reported from the Telegram bot. One row per user and date (a later message replaces it). */
+export const dayOffs = pgTable(
+  'day_offs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    telegramUserId: bigint('telegram_user_id', { mode: 'number' }).notNull(),
+    date: date('date', { mode: 'string' }).notNull(),
+    kind: varchar('kind', { length: 16 }).$type<(typeof DAY_OFF_KINDS)[number]>().notNull(),
+    // Leave only: "2h", "morning", "afternoon" or "full day".
+    detail: varchar('detail', { length: 32 }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+  },
+  (t) => [unique('day_offs_user_date_unique').on(t.telegramUserId, t.date)],
+);
+
+export type DayOffRow = typeof dayOffs.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
 export type NewTaskRow = typeof tasks.$inferInsert;
 export type WeeklyReviewRow = typeof weeklyReviews.$inferSelect;
