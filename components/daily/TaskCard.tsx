@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertTriangle, ArrowLeft, Pencil } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Pencil, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { STATUS_STYLE } from '@/components/daily/status-style';
 import { StatusToggle } from '@/components/daily/StatusToggle';
 import { useSwipeLeft } from '@/components/daily/use-swipe-left';
@@ -13,10 +14,12 @@ interface TaskCardProps {
   task: TaskDTO;
   onStatusChange: (task: TaskDTO, status: TaskStatus) => void;
   onEdit: (task: TaskDTO) => void;
+  onDelete: (task: TaskDTO) => void;
 }
 
-export function TaskCard({ task, onStatusChange, onEdit }: TaskCardProps) {
+export function TaskCard({ task, onStatusChange, onEdit, onDelete }: TaskCardProps) {
   const pending = isTempId(task.id);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const upcoming = nextStatus(task.status);
   const { icon: UpcomingIcon, text: upcomingText, soft: upcomingSoft } = STATUS_STYLE[upcoming];
   const swipe = useSwipeLeft(() => onStatusChange(task, upcoming), !pending);
@@ -67,6 +70,20 @@ export function TaskCard({ task, onStatusChange, onEdit }: TaskCardProps) {
           className="grid size-11 shrink-0 place-items-center rounded-lg text-hint disabled:opacity-50"
         >
           <Pencil aria-hidden className="size-4" />
+        </button>
+        {/* First tap arms, second tap deletes; moving focus away disarms. */}
+        <button
+          type="button"
+          onClick={() => (confirmingDelete ? onDelete(task) : setConfirmingDelete(true))}
+          onBlur={() => setConfirmingDelete(false)}
+          disabled={pending}
+          aria-label={confirmingDelete ? `Tap again to delete: ${task.title}` : `Delete task: ${task.title}`}
+          className={cn(
+            'grid h-11 shrink-0 place-items-center rounded-lg text-danger disabled:opacity-50',
+            confirmingDelete ? 'bg-danger/15 px-2 text-xs font-semibold' : 'w-11',
+          )}
+        >
+          {confirmingDelete ? 'Delete?' : <Trash2 aria-hidden className="size-4" />}
         </button>
       </div>
     </li>

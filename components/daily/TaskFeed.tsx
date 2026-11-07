@@ -10,9 +10,10 @@ interface TaskFeedProps {
   tasks: readonly TaskDTO[];
   onStatusChange: (task: TaskDTO, status: TaskStatus) => void;
   onEdit: (task: TaskDTO) => void;
+  onDelete: (task: TaskDTO) => void;
 }
 
-export function TaskFeed({ tasks, onStatusChange, onEdit }: TaskFeedProps) {
+export function TaskFeed({ tasks, onStatusChange, onEdit, onDelete }: TaskFeedProps) {
   if (tasks.length === 0) {
     return (
       <EmptyState
@@ -38,7 +39,7 @@ export function TaskFeed({ tasks, onStatusChange, onEdit }: TaskFeedProps) {
             </h2>
             <ul className="space-y-2">
               {group.map((task) => (
-                <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onEdit={onEdit} />
+                <TaskCard key={task.id} task={task} onStatusChange={onStatusChange} onEdit={onEdit} onDelete={onDelete} />
               ))}
             </ul>
           </section>

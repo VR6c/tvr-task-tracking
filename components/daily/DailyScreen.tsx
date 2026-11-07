@@ -75,7 +75,12 @@ export function DailyScreen() {
           ) : resource.loading || !resource.data ? (
             <SkeletonList label="Loading tasks" />
           ) : (
-            <TaskFeed tasks={tasks} onStatusChange={(t, s) => void changeStatus(t, s)} onEdit={(t) => setEditingId(t.id)} />
+            <TaskFeed
+              tasks={tasks}
+              onStatusChange={(t, s) => void changeStatus(t, s)}
+              onEdit={(t) => setEditingId(t.id)}
+              onDelete={(t) => void deleteTask(t)}
+            />
           )}
         </div>
       </div>
@@ -91,12 +96,7 @@ export function DailyScreen() {
       </StickyAction>
 
       {editing && (
-        <TaskEditSheet
-          task={editing}
-          onSave={(patch) => editTask(editing, patch)}
-          onDelete={() => deleteTask(editing)}
-          onClose={() => setEditingId(null)}
-        />
+        <TaskEditSheet task={editing} onSave={(patch) => editTask(editing, patch)} onClose={() => setEditingId(null)} />
       )}
     </>
   );
