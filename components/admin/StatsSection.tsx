@@ -37,7 +37,7 @@ export function StatsSection() {
           <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label="Total tasks" value={data.totals.tasks} />
             <Stat label={formatMonthLabel(data.month)} value={data.totals.thisMonth} />
-            <Stat label="Open (Feedback)" value={data.totals.open} />
+            <Stat label="Open (Plan + Feedback)" value={data.totals.open} />
             <Stat label="Carry-overs" value={data.totals.openCarryOvers} tone="warn" />
             <Stat label="Over deadline" value={data.totals.overDeadline} tone="danger" />
             <Stat label="Done" value={data.byStatus.Done} />

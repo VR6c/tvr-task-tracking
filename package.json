@@ -17,7 +17,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx db/seed.ts",
-    "bot:setup": "tsx scripts/setup-bot.ts"
+    "bot:setup": "tsx scripts/setup-bot.ts",
+    "admin:create": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@neon/config": "^1.10.0",

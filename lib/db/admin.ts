@@ -17,7 +17,7 @@ export async function getAdminStats(
         tasks: count(),
         thisMonth: sql<number>`count(*) filter (where ${tasks.monthYear} = ${monthYear})`.mapWith(Number),
         overDeadline: sql<number>`count(*) filter (where ${tasks.isOverDeadline})`.mapWith(Number),
-        openCarryOvers: sql<number>`count(*) filter (where ${tasks.status} = 'Feedback' and ${tasks.scheduledDate} < ${today})`.mapWith(Number),
+        openCarryOvers: sql<number>`count(*) filter (where ${tasks.status} in ('Plan', 'Feedback') and ${tasks.scheduledDate} < ${today})`.mapWith(Number),
         lastTaskAt: max(tasks.createdAt),
       })
       .from(tasks)
@@ -44,7 +44,7 @@ export async function getAdminStats(
     totals: {
       tasks: total?.tasks ?? 0,
       thisMonth: total?.thisMonth ?? 0,
-      open: byStatus.Feedback,
+      open: byStatus.Plan + byStatus.Feedback,
       openCarryOvers: total?.openCarryOvers ?? 0,
       overDeadline: total?.overDeadline ?? 0,
       weeklyReviews: reviews[0]?.n ?? 0,
@@ -68,13 +68,4 @@ export async function searchTasks(db: Database, userId: number, query: string, l
     .where(query ? and(mine, ilike(tasks.title, likePattern(query))) : mine)
     .orderBy(desc(tasks.scheduledDate), desc(tasks.createdAt))
     .limit(limit);
-}
-
-/** Returns false when the task does not exist or belongs to another user. */
-export async function deleteTask(db: Database, userId: number, id: string): Promise<boolean> {
-  const rows = await db
-    .delete(tasks)
-    .where(and(eq(tasks.id, id), eq(tasks.telegramUserId, userId)))
-    .returning({ id: tasks.id });
-  return rows.length > 0;
 }

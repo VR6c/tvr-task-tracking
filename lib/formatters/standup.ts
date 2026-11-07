@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, isCompletedStatus } from '@/lib/constants';
+import { CATEGORY_LABELS, isCompletedStatus, isOpenStatus } from '@/lib/constants';
 import { inline } from '@/lib/formatters/escape';
 import { formatDateLong } from '@/lib/week-utils';
 import type { TaskDTO } from '@/types/api';
@@ -17,7 +17,7 @@ function section(heading: string, lines: string[]): string {
 /** FR-DAY-03: Telegram Markdown standup grouped Success/Completed, Feedback/Pending, Blockers & Issues. */
 export function formatDailyStandup(date: string, tasks: readonly TaskDTO[]): string {
   const completed = tasks.filter((t) => isCompletedStatus(t.status));
-  const pending = tasks.filter((t) => t.status === 'Feedback');
+  const pending = tasks.filter((t) => isOpenStatus(t.status));
   const issues = tasks.filter((t) => (t.issueRemark ?? '').trim().length > 0);
 
   return [

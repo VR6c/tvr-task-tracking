@@ -6,7 +6,7 @@ import type { TaskDTO, WeeklyResponse } from '@/types/api';
 
 const MAX_LISTED = 15;
 
-/** "today", "waiting 1 day", "waiting 4 days" - how long a task has been sitting in Feedback. */
+/** "today", "waiting 1 day", "waiting 4 days" - how long a task has been sitting open. */
 export function waitingLabel(scheduledDate: string, today: string): string {
   const days = daysBetween(scheduledDate, today);
   if (days <= 0) return 'today';
@@ -19,14 +19,14 @@ function listed(tasks: readonly TaskDTO[], today: string): string[] {
   return lines;
 }
 
-/** FR-BOT-03: 08:30 reminder - every task still in Feedback, oldest first, with how long it has been waiting. */
+/** FR-BOT-03: 08:30 reminder - every task still open (Plan or Feedback), oldest first, with how long it has been waiting. */
 export function formatDailyDigest(date: string, carryOvers: readonly TaskDTO[], today: readonly TaskDTO[]): string {
   const lines = [`*Good morning — ${formatDateLong(date)}*`, ''];
   if (carryOvers.length === 0 && today.length === 0) {
     lines.push('No open tasks. Log today\'s first test to get started.');
     return lines.join('\n');
   }
-  lines.push(`${carryOvers.length + today.length} task(s) still in Feedback.`, '');
+  lines.push(`${carryOvers.length + today.length} task(s) still open.`, '');
   if (carryOvers.length) {
     lines.push(`*Carry-over priorities* (${carryOvers.length})`, ...listed(carryOvers, date), '');
   } else {

@@ -257,6 +257,24 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
       expect(malformed.status).toBe(404);
     });
 
+    it('DELETE removes the task and 404s for unknown or foreign ids', async () => {
+      const { json } = await createTask({ title: 'Remove me', category: 'quick_test', scheduledDate: '2026-11-03' });
+      const del = (id: string) =>
+        routes.task.DELETE(call(`/api/tasks/${id}`, { method: 'DELETE', auth: AUTH() }), { params: Promise.resolve({ id }) });
+
+      expect((await del(json.task.id)).status).toBe(204);
+      const list = await routes.tasks.GET(call('/api/tasks?date=2026-11-03', { auth: AUTH() }), noParams);
+      expect(((await list.json()) as { tasks: unknown[] }).tasks).toEqual([]);
+      expect((await del(json.task.id)).status).toBe(404);
+
+      const [foreign] = await db
+        .insert(tasks)
+        .values({ telegramUserId: FOREIGN, title: 'Not yours', category: 'quick_test', scheduledDate: '2026-11-03', monthYear: '2026-11' })
+        .returning();
+      expect((await del(foreign?.id ?? '')).status).toBe(404);
+      expect((await del('not-a-uuid')).status).toBe(404);
+    });
+
     it('the database refuses a month_year that disagrees with scheduled_date', async () => {
       await expect(
         db.insert(tasks).values({
@@ -641,7 +659,7 @@ describe.skipIf(!TEST_URL)('API against a real database', () => {
         expect(res.status).toBe(200);
         expect(await res.json()).toMatchObject({
           totals: { tasks: 2, open: 1, openCarryOvers: 1, overDeadline: 1, thisMonth: 1 },
-          byStatus: { Feedback: 1, Done: 1, Success: 0 },
+          byStatus: { Plan: 0, Feedback: 1, Done: 1, Success: 0 },
           byCategory: { production_bug: 1, quick_test: 0 },
         });
       });

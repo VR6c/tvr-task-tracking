@@ -9,7 +9,7 @@ describe('formatDailyDigest', () => {
     const text = formatDailyDigest('2026-11-03', [makeTask({ title: 'Retest login', scheduledDate: '2026-10-30' })], []);
     expect(text).toContain('*Carry-over priorities* (1)');
     expect(text).toContain('• Retest login — Quick Test _(waiting 4 days)_');
-    expect(text).toContain('1 task(s) still in Feedback.');
+    expect(text).toContain('1 task(s) still open.');
   });
 
   it('shows planned tasks for today and handles an empty backlog', () => {

@@ -22,7 +22,7 @@ export const TASK_CATEGORIES = [
   'idea_propose',
   'research_doc',
 ] as const;
-export const TASK_STATUSES = ['Feedback', 'Done', 'Success'] as const;
+export const TASK_STATUSES = ['Plan', 'Feedback', 'Done', 'Success'] as const;
 export const ENVIRONMENTS = ['Development', 'TestFlight', 'Production'] as const;
 
 export const taskCategoryEnum = pgEnum('task_category', TASK_CATEGORIES);
@@ -100,6 +100,17 @@ export const dayOffs = pgTable(
   (t) => [unique('day_offs_user_date_unique').on(t.telegramUserId, t.date)],
 );
 
+/** Web admin accounts (username + password login). Every admin acts on ALLOWED_TELEGRAM_USER_ID's data. */
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  username: varchar('username', { length: 64 }).notNull().unique('admin_users_username_unique'),
+  // scrypt$N$r$p$<salt b64url>$<hash b64url> (lib/auth/password.ts)
+  passwordHash: text('password_hash').notNull(),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true, mode: 'date' }),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+});
+
+export type AdminUserRow = typeof adminUsers.$inferSelect;
 export type DayOffRow = typeof dayOffs.$inferSelect;
 export type TaskRow = typeof tasks.$inferSelect;
 export type NewTaskRow = typeof tasks.$inferInsert;

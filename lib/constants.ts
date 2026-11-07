@@ -21,15 +21,19 @@ export const CATEGORY_LABELS: Record<TaskCategory, string> = {
 };
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
+  Plan: 'Plan',
   Feedback: 'Feedback',
   Done: 'Done',
   Success: 'Success',
 };
 
 /** Tap order used by the 1-tap status toggle (FR-DAY-02). */
-export const STATUS_CYCLE: readonly TaskStatus[] = ['Feedback', 'Done', 'Success'];
+export const STATUS_CYCLE: readonly TaskStatus[] = ['Plan', 'Feedback', 'Done', 'Success'];
 
 export const COMPLETED_STATUSES: readonly TaskStatus[] = ['Done', 'Success'];
+
+/** Not yet completed: planned work and tasks waiting on feedback. */
+export const OPEN_STATUSES = ['Plan', 'Feedback'] as const satisfies readonly TaskStatus[];
 
 export const ENVIRONMENT_LABELS: Record<Environment, string> = {
   Development: 'Dev',
@@ -43,6 +47,10 @@ export const NARRATIVE_MAX_LENGTH = 10_000;
 
 export function isCompletedStatus(status: TaskStatus): boolean {
   return status === 'Done' || status === 'Success';
+}
+
+export function isOpenStatus(status: TaskStatus): boolean {
+  return !isCompletedStatus(status);
 }
 
 export function nextStatus(status: TaskStatus): TaskStatus {

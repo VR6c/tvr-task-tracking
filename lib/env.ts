@@ -7,6 +7,8 @@ const serverSchema = z.object({
   WEBHOOK_SECRET: z.string().regex(/^[A-Za-z0-9_-]{1,256}$/, 'WEBHOOK_SECRET may only contain A-Z a-z 0-9 _ -'),
   NEXT_PUBLIC_APP_URL: z.string().url(),
   CRON_SECRET: z.string().min(8),
+  /** Optional: HS256 key for web-admin JWTs. Falls back to a key derived from BOT_TOKEN. */
+  JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters').optional(),
   /** Optional: self-hosted Bot API server (defaults to https://api.telegram.org). */
   TELEGRAM_API_ROOT: z.string().url().optional(),
   /** Optional Google Sheets sync: all three must be set to enable it. */

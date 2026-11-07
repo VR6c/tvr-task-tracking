@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui/Toast';
 import { apiFetch, errorMessage } from '@/lib/client/api-client';
 import { haptic } from '@/lib/client/telegram';
 import { useResource, type Resource } from '@/lib/client/use-resource';
-import type { TaskStatus } from '@/lib/constants';
+import { isCompletedStatus, type TaskStatus } from '@/lib/constants';
 import type { CreateTaskInput, UpdateTaskInput } from '@/lib/validation';
 import type { TaskDTO, TasksResponse } from '@/types/api';
 
@@ -21,14 +21,17 @@ export interface TasksApi {
   addTask: (payload: NewTaskPayload) => Promise<boolean>;
   changeStatus: (task: TaskDTO, status: TaskStatus) => Promise<void>;
   editTask: (task: TaskDTO, patch: UpdateTaskInput) => Promise<boolean>;
+  deleteTask: (task: TaskDTO) => Promise<boolean>;
 }
+
+const byCreated = (a: TaskDTO, b: TaskDTO): number => a.createdAt.localeCompare(b.createdAt);
 
 const withTasks = (res: TasksResponse, fn: (tasks: TaskDTO[]) => TaskDTO[]): TasksResponse => ({
   ...res,
   tasks: fn(res.tasks),
 });
 
-/** Task list for one day with optimistic add / status toggle / edit, each rolling back (and toasting) on failure. */
+/** Task list for one day with optimistic add / status toggle / edit / delete, each rolling back (and toasting) on failure. */
 export function useTasks(date: string | null): TasksApi {
   const resource = useResource<TasksResponse>(date ? `tasks:${date}` : null, (signal) =>
     apiFetch<TasksResponse>(`/api/tasks?date=${date}`, { signal }),
@@ -53,7 +56,7 @@ export function useTasks(date: string | null): TasksApi {
         id: tempId,
         ...payload,
         scheduledDate: date,
-        completedAt: payload.status === 'Feedback' ? null : new Date().toISOString(),
+        completedAt: isCompletedStatus(payload.status) ? new Date().toISOString() : null,
         isOverDeadline: false,
         monthYear: date.slice(0, 7),
         createdAt: new Date().toISOString(),
@@ -107,7 +110,7 @@ export function useTasks(date: string | null): TasksApi {
     async (task: TaskDTO, status: TaskStatus) => {
       if (isTempId(task.id) || task.status === status) return;
       haptic('select');
-      const completing = status !== 'Feedback';
+      const completing = isCompletedStatus(status);
       await send(
         task,
         { status },
@@ -143,5 +146,23 @@ export function useTasks(date: string | null): TasksApi {
     [send],
   );
 
-  return { resource, addTask, changeStatus, editTask };
+  const deleteTask = useCallback(
+    async (task: TaskDTO): Promise<boolean> => {
+      if (isTempId(task.id)) return false;
+      mutate((res) => withTasks(res, (tasks) => tasks.filter((t) => t.id !== task.id)));
+      try {
+        await enqueue(task.id, () => apiFetch<void>(`/api/tasks/${task.id}`, { method: 'DELETE' }));
+        haptic('success');
+        return true;
+      } catch (error) {
+        mutate((res) => withTasks(res, (tasks) => [...tasks, task].sort(byCreated)));
+        haptic('error');
+        toast.show(`Task not deleted: ${errorMessage(error)}`, 'error');
+        return false;
+      }
+    },
+    [enqueue, mutate, toast],
+  );
+
+  return { resource, addTask, changeStatus, editTask, deleteTask };
 }

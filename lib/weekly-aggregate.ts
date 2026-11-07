@@ -1,4 +1,4 @@
-import { isCompletedStatus } from '@/lib/constants';
+import { isCompletedStatus, isOpenStatus } from '@/lib/constants';
 import { isInRange, type DateRange } from '@/lib/week-utils';
 import type { TaskDTO, WeeklySections } from '@/types/api';
 
@@ -21,8 +21,8 @@ function latestPerTitle(sortedTasks: readonly TaskDTO[]): TaskDTO[] {
 /**
  * FR-WK-01: group tasks of a Monday-Sunday window into the four slide sections.
  * Pass the window's tasks plus any still-open tasks scheduled before the window (carry-overs).
- * Achievements list every task worked on in the window with its latest status (Feedback, Done or Success);
- * the plan keeps tasks whose latest entry is still Feedback, so a carry-over finished this week drops out.
+ * Achievements list every task worked on in the window with its latest status (Plan, Feedback, Done or Success);
+ * the plan keeps tasks whose latest entry is still open (Plan or Feedback), so a carry-over finished this week drops out.
  */
 export function aggregateWeek(tasks: readonly TaskDTO[], range: DateRange): WeeklySections {
   const sorted = [...tasks].sort(byScheduleThenCreated);
@@ -30,7 +30,7 @@ export function aggregateWeek(tasks: readonly TaskDTO[], range: DateRange): Week
 
   return {
     achievements: latestPerTitle(inWindow),
-    plan: latestPerTitle(sorted.filter((t) => t.scheduledDate <= range.end)).filter((t) => t.status === 'Feedback'),
+    plan: latestPerTitle(sorted.filter((t) => t.scheduledDate <= range.end)).filter((t) => isOpenStatus(t.status)),
     tracking: inWindow.filter(
       (t) => t.environment === 'TestFlight' || (t.category === 'milestone_feature' && isCompletedStatus(t.status)),
     ),

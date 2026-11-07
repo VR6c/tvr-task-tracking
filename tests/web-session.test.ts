@@ -1,7 +1,9 @@
 import { createHash, createHmac } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { validateLoginWidget } from '@/lib/auth/login-widget';
-import { createSessionToken, readCookie, SESSION_COOKIE, verifySessionToken } from '@/lib/auth/session';
+import { signJwt } from '@/lib/auth/jwt';
+import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from '@/lib/auth/password';
+import { createSessionToken, readCookie, SESSION_COOKIE, sessionSecret, verifySessionToken } from '@/lib/auth/session';
 import { authenticate } from '@/lib/auth/with-auth';
 
 const BOT_TOKEN = '123456789:AAH-test-token';
@@ -42,19 +44,33 @@ describe('validateLoginWidget', () => {
   });
 });
 
-describe('session token', () => {
+const SECRET = sessionSecret({ BOT_TOKEN, JWT_SECRET: undefined });
+const claims = (uid = USER_ID) => ({ sub: 'admin:abc', uid, name: 'admin' });
+
+describe('session JWT', () => {
   it('round-trips and expires after 7 days', () => {
-    const token = createSessionToken(USER_ID, BOT_TOKEN, NOW);
-    expect(verifySessionToken(token, BOT_TOKEN, NOW)).toBe(USER_ID);
-    expect(verifySessionToken(token, BOT_TOKEN, new Date(NOW.getTime() + 8 * 86_400_000))).toBeNull();
+    const token = createSessionToken(claims(), SECRET, NOW);
+    expect(token.split('.')).toHaveLength(3);
+    expect(verifySessionToken(token, SECRET, NOW)).toMatchObject({ ...claims(), iat: nowSeconds });
+    expect(verifySessionToken(token, SECRET, new Date(NOW.getTime() + 8 * 86_400_000))).toBeNull();
   });
 
-  it('rejects forged or foreign tokens', () => {
-    const token = createSessionToken(USER_ID, BOT_TOKEN, NOW);
-    expect(verifySessionToken(token.replace(String(USER_ID), '1'), BOT_TOKEN, NOW)).toBeNull();
-    expect(verifySessionToken(token, '999:other', NOW)).toBeNull();
-    expect(verifySessionToken('garbage', BOT_TOKEN, NOW)).toBeNull();
-    expect(verifySessionToken(null, BOT_TOKEN, NOW)).toBeNull();
+  it('uses JWT_SECRET when set', () => {
+    expect(sessionSecret({ BOT_TOKEN, JWT_SECRET: 'x'.repeat(32) })).toBe('x'.repeat(32));
+    const token = createSessionToken(claims(), 'x'.repeat(32), NOW);
+    expect(verifySessionToken(token, SECRET, NOW)).toBeNull();
+  });
+
+  it('rejects tampered, foreign and alg-swapped tokens', () => {
+    const token = createSessionToken(claims(), SECRET, NOW);
+    const [header, , signature] = token.split('.');
+    const forgedPayload = Buffer.from(JSON.stringify({ ...claims(1), iat: nowSeconds, exp: nowSeconds + 60 })).toString('base64url');
+    expect(verifySessionToken(`${header}.${forgedPayload}.${signature}`, SECRET, NOW)).toBeNull();
+    const none = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64url');
+    expect(verifySessionToken(`${none}.${forgedPayload}.`, SECRET, NOW)).toBeNull();
+    expect(verifySessionToken(signJwt(claims(), 'other-secret', 60, NOW), SECRET, NOW)).toBeNull();
+    expect(verifySessionToken('garbage', SECRET, NOW)).toBeNull();
+    expect(verifySessionToken(null, SECRET, NOW)).toBeNull();
   });
 
   it('reads a cookie from the request header', () => {
@@ -64,7 +80,18 @@ describe('session token', () => {
   });
 });
 
-describe('authenticate with a session cookie', () => {
+describe('password hashing', () => {
+  it('verifies the right password only', async () => {
+    const hash = await hashPassword('correct horse battery');
+    expect(hash).toMatch(/^scrypt\$32768\$8\$1\$/);
+    expect(await verifyPassword('correct horse battery', hash)).toBe(true);
+    expect(await verifyPassword('wrong password', hash)).toBe(false);
+    expect(await verifyPassword('anything', DUMMY_PASSWORD_HASH)).toBe(false);
+    expect(await verifyPassword('anything', 'not-a-hash')).toBe(false);
+  });
+});
+
+describe('authenticate with a session JWT', () => {
   beforeEach(() => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('DATABASE_URL', 'postgres://x');
@@ -80,7 +107,7 @@ describe('authenticate with a session cookie', () => {
     new Request('https://app.example.com/api/admin/stats', {
       method,
       headers: {
-        cookie: `${SESSION_COOKIE}=${createSessionToken(userId, BOT_TOKEN)}`,
+        cookie: `${SESSION_COOKIE}=${createSessionToken(claims(userId), SECRET)}`,
         ...(origin ? { origin } : {}),
       },
     });
@@ -95,5 +122,12 @@ describe('authenticate with a session cookie', () => {
     expect(() => authenticate(request('DELETE'))).toThrow(/Cross-site/);
     expect(() => authenticate(new Request('https://app.example.com/api/admin/stats'))).toThrow(/credentials/);
     expect(() => authenticate(request('GET', 42))).toThrow(/not allowed/);
+  });
+
+  it('accepts a Bearer JWT without an Origin (other systems, scripts)', () => {
+    const bearer = (token: string) =>
+      new Request('https://app.example.com/api/tasks', { method: 'POST', headers: { authorization: `Bearer ${token}` } });
+    expect(authenticate(bearer(createSessionToken(claims(), SECRET)))).toBe(USER_ID);
+    expect(() => authenticate(bearer('nope'))).toThrow(/credentials/);
   });
 });

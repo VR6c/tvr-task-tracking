@@ -1,7 +1,7 @@
 import { ApiError } from '@/lib/api/errors';
 import { withAuth } from '@/lib/auth/with-auth';
-import { deleteTask } from '@/lib/db/admin';
 import { getDb } from '@/lib/db/client';
+import { deleteTask } from '@/lib/db/tasks';
 import { uuidSchema } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';

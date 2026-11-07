@@ -6,9 +6,9 @@ import type { TaskDTO } from '@/types/api';
 
 /**
  * completed_at rules (PATCH /api/tasks/[id]):
- * - becomes Done/Success from Feedback  -> stamp `now`
- * - moves between Done and Success      -> keep the original completion time
- * - reverts to Feedback                 -> clear
+ * - becomes Done/Success from Plan/Feedback -> stamp `now`
+ * - moves between Done and Success           -> keep the original completion time
+ * - reverts to Plan/Feedback                 -> clear
  */
 export function computeCompletedAt(
   previous: { status: TaskStatus; completedAt: Date | null },

@@ -15,6 +15,20 @@
       "when": 1793754067957,
       "tag": "0001_moaning_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793784268916,
+      "tag": "0002_admin_users",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794040722909,
+      "tag": "0003_task_status_plan",
+      "breakpoints": true
     }
   ]
 }

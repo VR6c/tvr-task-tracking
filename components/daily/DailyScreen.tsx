@@ -22,7 +22,7 @@ export function DailyScreen() {
   const [picked, setPicked] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const date = picked ?? today;
-  const { resource, addTask, changeStatus, editTask } = useTasks(date);
+  const { resource, addTask, changeStatus, editTask, deleteTask } = useTasks(date);
 
   if (!date) return <DailySkeleton />;
 
@@ -91,7 +91,12 @@ export function DailyScreen() {
       </StickyAction>
 
       {editing && (
-        <TaskEditSheet task={editing} onSave={(patch) => editTask(editing, patch)} onClose={() => setEditingId(null)} />
+        <TaskEditSheet
+          task={editing}
+          onSave={(patch) => editTask(editing, patch)}
+          onDelete={() => deleteTask(editing)}
+          onClose={() => setEditingId(null)}
+        />
       )}
     </>
   );

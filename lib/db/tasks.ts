@@ -1,5 +1,6 @@
 import { and, asc, eq, gte, inArray, lt, lte, or } from 'drizzle-orm';
 import { tasks, type NewTaskRow, type TaskRow } from '@/db/schema';
+import { OPEN_STATUSES } from '@/lib/constants';
 import type { Database } from '@/lib/db/client';
 import { buildNewTask, buildTaskPatch } from '@/lib/tasks';
 import type { CreateTaskInput, UpdateTaskInput } from '@/lib/validation';
@@ -61,7 +62,7 @@ export async function listWeekCandidates(db: Database, userId: number, range: Da
         eq(tasks.telegramUserId, userId),
         or(
           and(gte(tasks.scheduledDate, range.start), lte(tasks.scheduledDate, range.end)),
-          and(lt(tasks.scheduledDate, range.start), eq(tasks.status, 'Feedback')),
+          and(lt(tasks.scheduledDate, range.start), inArray(tasks.status, OPEN_STATUSES)),
         ),
       ),
     )
@@ -81,7 +82,7 @@ export async function listCarryOvers(db: Database, userId: number, date: string)
   return db
     .select()
     .from(tasks)
-    .where(and(eq(tasks.telegramUserId, userId), eq(tasks.status, 'Feedback'), lt(tasks.scheduledDate, date)))
+    .where(and(eq(tasks.telegramUserId, userId), inArray(tasks.status, OPEN_STATUSES), lt(tasks.scheduledDate, date)))
     .orderBy(...order);
 }
 
@@ -89,8 +90,17 @@ export async function listOpenToday(db: Database, userId: number, date: string):
   return db
     .select()
     .from(tasks)
-    .where(and(eq(tasks.telegramUserId, userId), eq(tasks.status, 'Feedback'), eq(tasks.scheduledDate, date)))
+    .where(and(eq(tasks.telegramUserId, userId), inArray(tasks.status, OPEN_STATUSES), eq(tasks.scheduledDate, date)))
     .orderBy(...order);
+}
+
+/** Deletes one of the user's tasks; false when it doesn't exist or belongs to someone else. */
+export async function deleteTask(db: Database, userId: number, id: string): Promise<boolean> {
+  const rows = await db
+    .delete(tasks)
+    .where(and(eq(tasks.id, id), eq(tasks.telegramUserId, userId)))
+    .returning({ id: tasks.id });
+  return rows.length > 0;
 }
 
 export async function deleteTasksByIds(db: Database, ids: string[]): Promise<void> {

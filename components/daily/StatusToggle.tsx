@@ -8,7 +8,7 @@ interface StatusToggleProps {
   disabled?: boolean;
 }
 
-/** Visible 1-tap fallback for the swipe gesture: cycles Feedback -> Done -> Success. */
+/** Visible 1-tap fallback for the swipe gesture: cycles Plan -> Feedback -> Done -> Success. */
 export function StatusToggle({ status, onToggle, disabled }: StatusToggleProps) {
   const { icon: Icon, text, soft, border } = STATUS_STYLE[status];
   return (

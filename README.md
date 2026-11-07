@@ -63,6 +63,7 @@ Copy `.env.example` to `.env.local`. All are **server-side only**; nothing here 
 | `WEBHOOK_SECRET` | yes | Random string (`A-Z a-z 0-9 _ -`, ≤256 chars). Telegram sends it in `X-Telegram-Bot-Api-Secret-Token`; `/api/bot` rejects anything else. |
 | `NEXT_PUBLIC_APP_URL` | yes | Public **https** URL of the app, no trailing slash. Used for the WebApp buttons and `bot:setup`. |
 | `CRON_SECRET` | yes | Bearer secret for `/api/cron/*`. Vercel sends it automatically. |
+| `JWT_SECRET` | no | HS256 key (≥32 chars) for web-admin login JWTs. Unset = derived from `BOT_TOKEN`. Change it to revoke every issued token. |
 | `TELEGRAM_API_ROOT` | no | Custom Bot API server (defaults to `https://api.telegram.org`). Used by the integration tests. |
 
 Generate secrets with `openssl rand -hex 32`.
@@ -163,11 +164,31 @@ The **Admin** tab (`/admin`) controls the bot from inside the Mini App. The admi
 
 ### Web admin (normal browser)
 
-Open `https://<your-app>/admin` in any browser. Without a session you are sent to `/login`, which shows the **Log in with Telegram** button. Only `ALLOWED_TELEGRAM_USER_ID` is accepted; a successful login sets a 7-day httpOnly cookie (`tvr_session`, signed with a key derived from `BOT_TOKEN`, so rotating the token logs every browser out). The Daily/Weekly/Monthly tabs work in the browser too. **Log out** is in the Admin header.
+Open `https://<your-app>/admin` in any browser. Without a session you are sent to `/login`, which offers two ways in. Both issue the same 7-day **JWT** (HS256), stored in the httpOnly `tvr_session` cookie:
 
-One-time setup: in @BotFather send `/setdomain`, pick the bot and enter your app's domain (e.g. `your-app.vercel.app`, no `https://`). The login widget only renders on that domain, so it does not work on `localhost`; use the deployed URL or your tunnel domain. In `next dev` the browser still uses the `dev-mock` header, so no login is needed locally.
+- **Username + password**: admin accounts live in the `admin_users` table (password hashed with scrypt). Create one, or reset a password, with:
 
-Cookie-authenticated writes (POST/PATCH/DELETE) must carry this app's own `Origin`; cross-site requests get 403.
+  ```bash
+  npm run db:migrate                     # creates admin_users (migration 0002)
+  npm run admin:create -- alice          # prompts for the password (min 10 chars)
+  ADMIN_PASSWORD='…' npm run admin:create -- alice   # non-interactive
+  ```
+
+- **Log in with Telegram**: only `ALLOWED_TELEGRAM_USER_ID`. One-time setup: in @BotFather send `/setdomain` and enter your app's domain (e.g. `your-app.vercel.app`). The widget only renders on that domain, not on `localhost`.
+
+Every admin works on the same data (`ALLOWED_TELEGRAM_USER_ID`'s tasks). The Daily/Weekly/Monthly tabs work in the browser too. **Log out** is in the Admin header. In `next dev` the browser still uses the `dev-mock` header, so no login is needed locally.
+
+JWTs are signed with `JWT_SECRET` (or a key derived from `BOT_TOKEN` when unset). They are stateless: deleting an admin row stops new logins, but an already-issued token stays valid until it expires. Change `JWT_SECRET` to revoke every token at once.
+
+**API access for other systems:** `POST /api/auth/login` with `{"username","password"}` returns `{ token, expiresAt }`. Send it as `Authorization: Bearer <token>` to any `/api/*` route:
+
+```bash
+TOKEN=$(curl -s -X POST https://<your-app>/api/auth/login -H 'Content-Type: application/json' \
+  -d '{"username":"alice","password":"…"}' | jq -r .token)
+curl -H "Authorization: Bearer $TOKEN" "https://<your-app>/api/tasks?date=2026-11-04"
+```
+
+Cookie-authenticated writes (POST/PATCH/DELETE) must carry this app's own `Origin`; cross-site requests get 403. Bearer requests are not subject to that check.
 
 ## Google Sheets sync (optional)
 

@@ -89,3 +89,8 @@ export const narrativeSchema = z.object({
   successStories: z.string().max(NARRATIVE_MAX_LENGTH).default(''),
 });
 export type NarrativeInput = z.infer<typeof narrativeSchema>;
+
+export const adminLoginSchema = z.object({
+  username: z.string().trim().min(1, 'Enter your username').max(64),
+  password: z.string().min(1, 'Enter your password').max(256),
+});

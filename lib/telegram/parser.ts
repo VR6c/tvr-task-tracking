@@ -23,6 +23,8 @@ const STATUS_TAGS: Record<string, TaskStatus> = {
   done: 'Done',
   completed: 'Done',
   complete: 'Done',
+  plan: 'Plan',
+  planned: 'Plan',
   feedback: 'Feedback',
   pending: 'Feedback',
   todo: 'Feedback',
