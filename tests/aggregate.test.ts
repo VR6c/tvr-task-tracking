@@ -81,6 +81,14 @@ describe('aggregateWeek: one task logged on several days', () => {
     expect(plan).toEqual([]);
   });
 
+  it('drops an earlier-week carry-over already finished before the window', () => {
+    const carry = makeTask({ title: 'Task A', status: 'Plan', scheduledDate: '2026-10-27' });
+    const success = makeTask({ title: 'task a', status: 'Success', scheduledDate: '2026-10-29' });
+    const { achievements, plan } = aggregateWeek([carry, success], range);
+    expect(achievements).toEqual([]);
+    expect(plan).toEqual([]);
+  });
+
   it('does not merge different titles', () => {
     const other = makeTask({ title: 'Task B', status: 'Feedback', scheduledDate: '2026-11-03' });
     expect(aggregateWeek([wed, other], range).achievements).toEqual([other, wed]);

@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lt, lte, or } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, lt, lte, or, sql } from 'drizzle-orm';
 import { tasks, type NewTaskRow, type TaskRow } from '@/db/schema';
 import { OPEN_STATUSES } from '@/lib/constants';
 import type { Database } from '@/lib/db/client';
@@ -52,8 +52,24 @@ export async function updateTask(
   });
 }
 
-/** Tasks scheduled inside the window plus still-open tasks scheduled before it (carry-overs). */
+/** Same normalisation as the weekly aggregate's title key (trim + lowercase). */
+const titleKey = sql`lower(trim(${tasks.title}))`;
+
+/**
+ * Tasks scheduled inside the window plus every earlier entry sharing a title with a still-open earlier task
+ * (carry-overs). The completed entries let the aggregate drop a carry-over finished before the window.
+ */
 export async function listWeekCandidates(db: Database, userId: number, range: DateRange): Promise<TaskRow[]> {
+  const carryOverTitles = db
+    .select({ key: titleKey })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.telegramUserId, userId),
+        lt(tasks.scheduledDate, range.start),
+        inArray(tasks.status, OPEN_STATUSES),
+      ),
+    );
   return db
     .select()
     .from(tasks)
@@ -62,7 +78,7 @@ export async function listWeekCandidates(db: Database, userId: number, range: Da
         eq(tasks.telegramUserId, userId),
         or(
           and(gte(tasks.scheduledDate, range.start), lte(tasks.scheduledDate, range.end)),
-          and(lt(tasks.scheduledDate, range.start), inArray(tasks.status, OPEN_STATUSES)),
+          and(lt(tasks.scheduledDate, range.start), inArray(titleKey, carryOverTitles)),
         ),
       ),
     )
