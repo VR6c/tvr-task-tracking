@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 
 import { ChipGroup } from '@/components/ui/Chips';
 import { FieldGroup, TextArea, TextField } from '@/components/ui/Field';
 import { clearDraft, readDraft, writeDraft } from '@/lib/client/draft-storage';
-import { CATEGORY_OPTIONS, ENVIRONMENT_OPTIONS } from '@/lib/client/options';
-import { BUILD_VERSION_MAX_LENGTH, TITLE_MAX_LENGTH, type Environment, type TaskCategory } from '@/lib/constants';
+import { CATEGORY_OPTIONS, ENVIRONMENT_OPTIONS, STATUS_OPTIONS } from '@/lib/client/options';
+import { BUILD_VERSION_MAX_LENGTH, TITLE_MAX_LENGTH, type Environment, type TaskCategory, type TaskStatus } from '@/lib/constants';
 import type { UpdateTaskInput } from '@/lib/validation';
 import type { TaskDTO } from '@/types/api';
 
@@ -21,6 +21,7 @@ const FOCUSABLE = 'button:not([disabled]), input:not([disabled]), textarea:not([
 export function TaskEditSheet({ task, onSave, onClose }: TaskEditSheetProps) {
   const remarkKey = `remark:${task.id}`;
   const [title, setTitle] = useState(task.title);
+  const [status, setStatus] = useState<TaskStatus>(task.status);
   const [category, setCategory] = useState<TaskCategory>(task.category);
   const [environment, setEnvironment] = useState<Environment>(task.environment);
   const [buildVersion, setBuildVersion] = useState(task.buildVersion ?? '');
@@ -65,6 +66,7 @@ export function TaskEditSheet({ task, onSave, onClose }: TaskEditSheetProps) {
     setSaving(true);
     const ok = await onSave({
       title: title.trim(),
+      status,
       category,
       environment,
       buildVersion: buildVersion.trim() || null,
@@ -91,6 +93,9 @@ export function TaskEditSheet({ task, onSave, onClose }: TaskEditSheetProps) {
         <form onSubmit={(e) => void submit(e)} className="space-y-3">
           <h2 className="text-lg font-bold">Edit task</h2>
           <TextField label="Task title" value={title} maxLength={TITLE_MAX_LENGTH} onChange={(e) => setTitle(e.target.value)} />
+          <FieldGroup label="Status">
+            <ChipGroup variant="segmented" label="Status" options={STATUS_OPTIONS} value={status} onChange={setStatus} />
+          </FieldGroup>
           <FieldGroup label="Category">
             <ChipGroup label="Category" options={CATEGORY_OPTIONS} value={category} onChange={setCategory} />
           </FieldGroup>
