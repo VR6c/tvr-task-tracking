@@ -1,38 +1,29 @@
 'use client';
 
-import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { InlineError, Section } from '@/components/admin/Section';
+import { useAdminAction } from '@/components/admin/use-admin-action';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { useToast } from '@/components/ui/Toast';
-import { apiFetch, errorMessage } from '@/lib/client/api-client';
-import { haptic } from '@/lib/client/telegram';
+import { apiFetch } from '@/lib/client/api-client';
 import { useResource } from '@/lib/client/use-resource';
 import { cn } from '@/lib/cn';
 import type { AdminBotResponse } from '@/types/api';
 
 export function BotSection() {
-  const toast = useToast();
-  const [syncing, setSyncing] = useState(false);
+  const { pending, run } = useAdminAction();
+  const syncing = pending !== null;
   const bot = useResource<AdminBotResponse>('admin:bot', (signal) =>
     apiFetch<AdminBotResponse>('/api/admin/bot', { signal }),
   );
   const data = bot.data;
   const webhookOk = !!data && data.webhook.url === data.webhook.expectedUrl && !data.webhook.lastError;
 
-  const sync = async () => {
-    setSyncing(true);
-    try {
-      bot.replace(await apiFetch<AdminBotResponse>('/api/admin/bot', { method: 'POST' }));
-      haptic('success');
-      toast.show('Bot registration updated');
-    } catch (error) {
-      haptic('error');
-      toast.show(errorMessage(error), 'error');
-    } finally {
-      setSyncing(false);
-    }
-  };
+  const sync = () =>
+    run(
+      'sync',
+      async () => bot.replace(await apiFetch<AdminBotResponse>('/api/admin/bot', { method: 'POST' })),
+      'Bot registration updated',
+    );
 
   return (
     <Section
