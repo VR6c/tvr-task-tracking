@@ -3,7 +3,7 @@ import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
 import { makeTask } from './factories';
 
 describe('formatDailyTaskList', () => {
-  it('lists every task with its status under the requested heading', () => {
+  it('lists every task under the requested heading', () => {
     const text = formatDailyTaskList('2026-11-03', [
       makeTask({ title: 'Regression voice msg', status: 'Done', buildVersion: 'v2.5.17 build 668' }),
       makeTask({ title: '[Chat] Member Not Found', status: 'Success', category: 'production_bug', issueRemark: 'Profile lookup fails' }),
@@ -15,12 +15,9 @@ describe('formatDailyTaskList', () => {
         '2/3 tasks done',
         '',
         '1. Regression voice msg',
-        '   Quick Test · v2.5.17 build 668 — *Done*',
         '2. \\[Chat] Member Not Found',
-        '   Prod Bug — *Success*',
         '   Issue: Profile lookup fails',
-        '3. Zoom QR scan',
-        '   Feature — *Feedback* (over deadline)',
+        '3. Zoom QR scan (over deadline)',
       ].join('\n'),
     );
   });

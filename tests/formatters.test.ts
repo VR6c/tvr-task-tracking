@@ -25,14 +25,14 @@ describe('formatDailyStandup', () => {
         '*Daily Standup — Tue, Nov 3 2026*',
         '',
         '*Success / Completed* (2)',
-        '• Regression voice msg — Quick Test · v2.5.17 build 668',
-        '• \\[Chat] Member Not Found — Prod Bug',
+        '• Regression voice msg',
+        '• \\[Chat] Member Not Found',
         '',
         '*Feedback / Pending* (1)',
-        '• Zoom QR scan — Feature',
+        '• Zoom QR scan',
         '',
         '*Blockers & Issues Logged* (1)',
-        '• \\[Chat] Member Not Found — Prod Bug',
+        '• \\[Chat] Member Not Found',
         '   ↳ Profile lookup fails',
       ].join('\n'),
     );
@@ -82,7 +82,7 @@ describe('formatWeeklySlide', () => {
     expect(output).toContain('*G — Good:* Cleared the backlog');
     expect(output).toContain('*C — Challenge:* _—_');
     expect(output).toContain('*N — Next Action:* Ship checklist v2');
-    expect(output).toContain('• Offline queue — Feature');
+    expect(output).toContain('• Offline queue');
     expect(output).toContain('↳ Opens wrong tab');
   });
 });

@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, STATUS_LABELS, isCompletedStatus } from '@/lib/constants';
+import { isCompletedStatus } from '@/lib/constants';
 import { inline } from '@/lib/formatters/escape';
 import { formatDateLong } from '@/lib/week-utils';
 import type { TaskDTO } from '@/types/api';
@@ -13,11 +13,9 @@ export function formatDailyTaskList(date: string, tasks: readonly TaskDTO[]): st
 
   const done = tasks.filter((t) => isCompletedStatus(t.status)).length;
   const lines = tasks.map((task, index) => {
-    const meta = [CATEGORY_LABELS[task.category], task.buildVersion].filter(Boolean).join(' · ');
     const remark = (task.issueRemark ?? '').trim();
     return [
-      `${index + 1}. ${inline(task.title)}`,
-      `   ${inline(meta)} — *${STATUS_LABELS[task.status]}*${task.isOverDeadline ? ' (over deadline)' : ''}`,
+      `${index + 1}. ${inline(task.title)}${task.isOverDeadline ? ' (over deadline)' : ''}`,
       remark ? `   Issue: ${inline(remark)}` : null,
     ]
       .filter(Boolean)

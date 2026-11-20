@@ -8,7 +8,7 @@ describe('formatDailyDigest', () => {
   it('lists carry-over priorities with their original dates', () => {
     const text = formatDailyDigest('2026-11-03', [makeTask({ title: 'Retest login', scheduledDate: '2026-10-30' })], []);
     expect(text).toContain('*Carry-over priorities* (1)');
-    expect(text).toContain('• Retest login — Quick Test _(waiting 4 days)_');
+    expect(text).toContain('• Retest login _(waiting 4 days)_');
     expect(text).toContain('1 task(s) still open.');
   });
 
@@ -16,7 +16,7 @@ describe('formatDailyDigest', () => {
     const text = formatDailyDigest('2026-11-03', [], [makeTask({ title: 'Smoke 2.6' })]);
     expect(text).toContain('Nothing carried over');
     expect(text).toContain('*Already planned today* (1)');
-    expect(text).toContain('• Smoke 2.6 — Quick Test _(today)_');
+    expect(text).toContain('• Smoke 2.6 _(today)_');
     expect(formatDailyDigest('2026-11-03', [], [])).toContain('No open tasks');
   });
 

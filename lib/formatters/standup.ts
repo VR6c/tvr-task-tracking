@@ -1,11 +1,10 @@
-import { CATEGORY_LABELS, isCompletedStatus, isOpenStatus } from '@/lib/constants';
+import { isCompletedStatus, isOpenStatus } from '@/lib/constants';
 import { inline } from '@/lib/formatters/escape';
 import { formatDateLong } from '@/lib/week-utils';
 import type { TaskDTO } from '@/types/api';
 
 export function taskLine(task: TaskDTO, options: { withRemark?: boolean } = {}): string {
-  const meta = [CATEGORY_LABELS[task.category], task.buildVersion].filter(Boolean).join(' · ');
-  const base = `• ${inline(task.title)} — ${inline(meta)}`;
+  const base = `• ${inline(task.title)}`;
   const remark = (task.issueRemark ?? '').trim();
   return options.withRemark && remark ? `${base}\n   ↳ ${inline(remark)}` : base;
 }
