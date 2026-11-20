@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   turbopack: { root: path.resolve(__dirname) },
+  experimental: { agentUpgrade: 'security' },
   // Lets `next dev` serve assets when the Mini App is opened through a tunnel (see README).
   allowedDevOrigins: ['*.ngrok-free.app', '*.ngrok.app', '*.trycloudflare.com', '*.loca.lt'],
   async headers() {
