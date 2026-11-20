@@ -3,11 +3,10 @@
 import { useEffect, useId, useState } from 'react';
 import { Search, Trash2 } from 'lucide-react';
 import { InlineError, Section } from '@/components/admin/Section';
+import { useAdminAction } from '@/components/admin/use-admin-action';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonList } from '@/components/ui/Skeleton';
-import { useToast } from '@/components/ui/Toast';
-import { apiFetch, errorMessage } from '@/lib/client/api-client';
-import { haptic } from '@/lib/client/telegram';
+import { apiFetch } from '@/lib/client/api-client';
 import { useResource } from '@/lib/client/use-resource';
 import { CATEGORY_LABELS, ENVIRONMENT_LABELS } from '@/lib/constants';
 import { formatDateShort } from '@/lib/week-utils';
@@ -16,11 +15,10 @@ import type { AdminTasksResponse, TaskDTO } from '@/types/api';
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function TasksSection() {
-  const toast = useToast();
   const inputId = useId();
   const [input, setInput] = useState('');
   const [query, setQuery] = useState('');
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const { pending: deleting, run } = useAdminAction();
 
   useEffect(() => {
     const timer = setTimeout(() => setQuery(input.trim()), SEARCH_DEBOUNCE_MS);
@@ -33,18 +31,14 @@ export function TasksSection() {
 
   const remove = async (task: TaskDTO) => {
     if (!window.confirm(`Delete "${task.title}"? This cannot be undone.`)) return;
-    setDeleting(task.id);
-    try {
-      await apiFetch<void>(`/api/admin/tasks/${task.id}`, { method: 'DELETE' });
-      tasks.mutate((current) => ({ tasks: current.tasks.filter((t) => t.id !== task.id) }));
-      haptic('success');
-      toast.show('Task deleted');
-    } catch (error) {
-      haptic('error');
-      toast.show(errorMessage(error), 'error');
-    } finally {
-      setDeleting(null);
-    }
+    await run(
+      task.id,
+      async () => {
+        await apiFetch<void>(`/api/admin/tasks/${task.id}`, { method: 'DELETE' });
+        tasks.mutate((current) => ({ tasks: current.tasks.filter((t) => t.id !== task.id) }));
+      },
+      'Task deleted',
+    );
   };
 
   return (

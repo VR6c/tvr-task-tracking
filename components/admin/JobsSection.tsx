@@ -1,35 +1,26 @@
 'use client';
 
-import { useState } from 'react';
 import { Send } from 'lucide-react';
 import { InlineError, Section } from '@/components/admin/Section';
+import { useAdminAction } from '@/components/admin/use-admin-action';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { useToast } from '@/components/ui/Toast';
-import { apiFetch, errorMessage } from '@/lib/client/api-client';
-import { haptic } from '@/lib/client/telegram';
+import { apiFetch } from '@/lib/client/api-client';
 import { useResource } from '@/lib/client/use-resource';
 import type { AdminJobResult, AdminJobsResponse } from '@/types/api';
 
 export function JobsSection() {
-  const toast = useToast();
-  const [running, setRunning] = useState<string | null>(null);
+  const { pending: running, run: runAction } = useAdminAction();
   const jobs = useResource<AdminJobsResponse>('admin:jobs', (signal) =>
     apiFetch<AdminJobsResponse>('/api/admin/jobs', { signal }),
   );
 
   const run = async (key: string, label: string) => {
     if (!window.confirm(`Run "${label}" now?`)) return;
-    setRunning(key);
-    try {
-      await apiFetch<AdminJobResult>(`/api/admin/jobs/${key}`, { method: 'POST' });
-      haptic('success');
-      toast.show(`${label} done`);
-    } catch (error) {
-      haptic('error');
-      toast.show(errorMessage(error), 'error');
-    } finally {
-      setRunning(null);
-    }
+    await runAction(
+      key,
+      () => apiFetch<AdminJobResult>(`/api/admin/jobs/${key}`, { method: 'POST' }).then(() => undefined),
+      `${label} done`,
+    );
   };
 
   return (
@@ -50,6 +41,7 @@ export function JobsSection() {
                 type="button"
                 onClick={() => run(job.key, job.label)}
                 disabled={running !== null}
+                aria-busy={running === job.key}
                 className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-accent px-3 text-sm font-semibold text-accent-fg disabled:opacity-60"
               >
                 <Send aria-hidden className="size-4" />

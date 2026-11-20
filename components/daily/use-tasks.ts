@@ -24,7 +24,19 @@ export interface TasksApi {
   deleteTask: (task: TaskDTO) => Promise<boolean>;
 }
 
-const byCreated = (a: TaskDTO, b: TaskDTO): number => a.createdAt.localeCompare(b.createdAt);
+/** Fields the edit sheet can change; status goes through `changeStatus` because it also moves `completedAt`. */
+const EDITABLE_FIELDS = ['title', 'category', 'environment', 'buildVersion', 'issueRemark', 'isOverDeadline'] as const;
+
+/** Copies only the editable fields that are present (not undefined) on `source`. */
+function pickEditable(source: Partial<Pick<TaskDTO, (typeof EDITABLE_FIELDS)[number]>>): Partial<TaskDTO> {
+  const picked: Record<string, unknown> = {};
+  for (const field of EDITABLE_FIELDS) {
+    if (source[field] !== undefined) picked[field] = source[field];
+  }
+  return picked as Partial<TaskDTO>;
+}
+
+const byCreated =(a: TaskDTO, b: TaskDTO): number => a.createdAt.localeCompare(b.createdAt);
 
 const withTasks = (res: TasksResponse, fn: (tasks: TaskDTO[]) => TaskDTO[]): TasksResponse => ({
   ...res,
@@ -123,26 +135,7 @@ export function useTasks(date: string | null): TasksApi {
 
   const editTask = useCallback(
     (task: TaskDTO, patch: UpdateTaskInput) =>
-      send(
-        task,
-        patch,
-        {
-          title: task.title,
-          category: task.category,
-          environment: task.environment,
-          buildVersion: task.buildVersion,
-          issueRemark: task.issueRemark,
-          isOverDeadline: task.isOverDeadline,
-        },
-        {
-          ...(patch.title !== undefined && { title: patch.title }),
-          ...(patch.category !== undefined && { category: patch.category }),
-          ...(patch.environment !== undefined && { environment: patch.environment }),
-          ...(patch.buildVersion !== undefined && { buildVersion: patch.buildVersion }),
-          ...(patch.issueRemark !== undefined && { issueRemark: patch.issueRemark }),
-          ...(patch.isOverDeadline !== undefined && { isOverDeadline: patch.isOverDeadline }),
-        },
-      ),
+      send(task, patch, pickEditable(task), pickEditable(patch)),
     [send],
   );
 
