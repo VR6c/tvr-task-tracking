@@ -45,7 +45,7 @@ export function BotSection() {
       ) : !data ? (
         <Skeleton className="h-32" />
       ) : (
-        <div className="space-y-3 rounded-lg border border-separator bg-surface p-3 text-sm">
+        <div className="space-y-3 rounded-xl border border-separator bg-bg p-3 text-sm">
           <dl className="space-y-2">
             <Row label="Bot" value={data.username ? `@${data.username}` : 'Unknown'} />
             <Row

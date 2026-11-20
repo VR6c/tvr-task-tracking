@@ -51,7 +51,7 @@ export function WeeklyBody({ view }: { view: WeeklyResponse }) {
           </div>
         </div>
 
-        <div className="space-y-3 lg:sticky lg:top-20">
+        <div className="space-y-3 lg:sticky lg:top-24">
           <h2 className="text-base font-bold">GCIN retrospective</h2>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             {GCIN_FIELDS.map(({ field, ...card }) => (

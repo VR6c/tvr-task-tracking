@@ -12,7 +12,7 @@ interface PeriodNavProps {
 }
 
 const arrow =
-  'grid size-11 shrink-0 place-items-center rounded-md bg-surface text-fg disabled:opacity-40 active:opacity-70';
+  'grid size-11 shrink-0 place-items-center rounded-xl border border-separator bg-bg text-fg disabled:opacity-40 active:opacity-70';
 
 /** Prev / label / next control shared by the date, week and month selectors. */
 export function PeriodNav({ label, prevLabel, nextLabel, onPrev, onNext, nextDisabled, className }: PeriodNavProps) {

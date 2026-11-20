@@ -32,7 +32,7 @@ export function JobsSection() {
       ) : (
         <ul className="space-y-2">
           {jobs.data.jobs.map((job) => (
-            <li key={job.key} className="flex items-center gap-3 rounded-lg border border-separator bg-surface p-3">
+            <li key={job.key} className="flex items-center gap-3 rounded-xl border border-separator bg-bg p-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{job.label}</p>
                 <p className="text-xs text-hint">{job.schedule} (Phnom Penh)</p>

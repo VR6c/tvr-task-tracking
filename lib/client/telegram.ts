@@ -28,6 +28,14 @@ function applyColorScheme(): void {
   });
 }
 
+/** Phones get true fullscreen (content under the status bar, safe-area vars keep controls clear). Desktop keeps its window. */
+function requestFullscreenOnMobile(): void {
+  const platform = new URLSearchParams(window.location.hash.slice(1)).get('tgWebAppPlatform');
+  const mobile = platform === 'ios' || platform === 'android' || platform === 'android_x';
+  if (!mobile || !viewport.requestFullscreen.isAvailable() || viewport.isFullscreen()) return;
+  void viewport.requestFullscreen().catch(() => undefined);
+}
+
 let initialised = false;
 
 /** Initialises the SDK once: theme CSS variables, expanded viewport, safe-area variables. */
@@ -57,6 +65,7 @@ export function initTelegram(): void {
         attempt(() => {
           if (viewport.expand.isAvailable()) viewport.expand();
         });
+        attempt(requestFullscreenOnMobile);
       })
       .catch(() => undefined);
   });

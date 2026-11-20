@@ -78,7 +78,7 @@ export function LoginScreen({ botUsername, next }: { botUsername: string | null;
   return (
     <>
       <ScreenHeader title="Sign in" subtitle="Web admin for TVR Task Tracking" />
-      <div className="max-w-md space-y-5 rounded-lg border border-separator bg-surface p-5">
+      <div className="max-w-md space-y-5 rounded-xl border border-separator bg-bg p-5">
         <form onSubmit={submit} className="space-y-3">
           <TextField
             label="Username"

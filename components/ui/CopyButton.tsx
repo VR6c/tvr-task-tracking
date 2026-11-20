@@ -55,7 +55,7 @@ export function CopyButton({ label, icon = Copy, getText, successMessage, disabl
       </button>
       {manualText !== null && (
         <div role="dialog" aria-modal="true" aria-label="Copy manually" className="fixed inset-0 z-50 flex items-end bg-black/50 md:items-center md:justify-center md:p-6">
-          <div className="mx-auto w-full max-w-[480px] rounded-t-lg bg-bg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:max-w-lg md:rounded-lg md:pb-4">
+          <div className="mx-auto w-full max-w-[480px] rounded-t-2xl bg-bg p-4 pb-[calc(1rem+var(--safe-bottom))] md:max-w-lg md:rounded-2xl md:pb-4">
             <p className="mb-2 text-sm text-hint">Your device blocked automatic copy. Select the text below and copy it.</p>
             <textarea
               readOnly

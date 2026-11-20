@@ -29,7 +29,7 @@ export function WeeklyScreen() {
         {weekStart && (
           <>
             <PeriodNav
-              className="md:max-w-sm"
+              className="md:max-w-sm lg:w-80"
               label={formatWeekLabel(weekStart)}
               prevLabel="Previous week"
               nextLabel="Next week"

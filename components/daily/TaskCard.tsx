@@ -22,11 +22,12 @@ export function TaskCard({ task, onStatusChange, onEdit, onDelete }: TaskCardPro
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const upcoming = nextStatus(task.status);
   const { icon: UpcomingIcon, text: upcomingText, soft: upcomingSoft } = STATUS_STYLE[upcoming];
+  const { strip } = STATUS_STYLE[task.status];
   const swipe = useSwipeLeft(() => onStatusChange(task, upcoming), !pending);
   const meta = [CATEGORY_LABELS[task.category], ENVIRONMENT_LABELS[task.environment], task.buildVersion].filter(Boolean);
 
   return (
-    <li className="relative overflow-hidden rounded-lg">
+    <li className="relative overflow-hidden rounded-xl">
       <div
         aria-hidden
         className={cn('absolute inset-0 flex items-center justify-end gap-2 pr-4 text-sm font-semibold', upcomingSoft, upcomingText)}
@@ -39,11 +40,12 @@ export function TaskCard({ task, onStatusChange, onEdit, onDelete }: TaskCardPro
         {...swipe.handlers}
         style={{ transform: `translateX(${swipe.offset}px)`, touchAction: 'pan-y' }}
         className={cn(
-          'relative flex items-start gap-2 rounded-lg border border-separator bg-surface p-3 transition-transform',
+          'relative flex items-start gap-2 rounded-xl border border-separator bg-bg p-3 pl-4 transition-transform lg:hover:border-accent/40',
           swipe.offset === 0 ? 'duration-200' : 'duration-0',
           pending && 'opacity-70',
         )}
       >
+        <span aria-hidden className={cn('absolute inset-y-2 left-0 w-1 rounded-r-full', strip)} />
         <StatusToggle status={task.status} disabled={pending} onToggle={() => onStatusChange(task, upcoming)} />
         <div className="min-w-0 flex-1 py-0.5">
           <p className={cn('break-words text-[15px] font-medium leading-snug', task.status !== 'Feedback' && 'text-fg/80')}>

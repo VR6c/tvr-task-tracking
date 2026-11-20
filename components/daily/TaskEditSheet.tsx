@@ -88,7 +88,7 @@ export function TaskEditSheet({ task, onSave, onClose }: TaskEditSheetProps) {
         aria-modal="true"
         aria-label="Edit task"
         onClick={(e) => e.stopPropagation()}
-        className="mx-auto max-h-[92dvh] w-full max-w-[480px] overflow-y-auto rounded-t-lg bg-bg p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:max-w-lg md:rounded-lg md:pb-4"
+        className="mx-auto max-h-[92dvh] w-full max-w-[480px] overflow-y-auto rounded-t-2xl bg-bg p-4 pb-[calc(1rem+var(--safe-bottom))] md:max-w-lg md:rounded-2xl md:pb-4"
       >
         <form onSubmit={(e) => void submit(e)} className="space-y-3">
           <h2 className="text-lg font-bold">Edit task</h2>

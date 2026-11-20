@@ -2,7 +2,7 @@ import { useId, type InputHTMLAttributes, type TextareaHTMLAttributes } from 're
 import { cn } from '@/lib/cn';
 
 const control =
-  'w-full rounded-md border border-separator bg-bg px-3 text-[15px] placeholder:text-hint/70 focus-visible:border-accent';
+  'w-full rounded-md border border-separator bg-surface px-3 text-[15px] placeholder:text-hint/70 focus-visible:border-accent';
 
 export function TextField({
   label,

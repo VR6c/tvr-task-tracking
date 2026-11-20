@@ -30,8 +30,8 @@ export function ChipGroup<T extends string>({ label, options, value, onChange, v
             className={cn(
               'min-h-11 text-sm font-medium transition-colors',
               segmented
-                ? cn('flex-1 px-2', index > 0 && 'border-l border-separator', selected ? 'bg-accent text-accent-fg' : 'bg-bg text-fg')
-                : cn('rounded-md border px-3.5', selected ? 'border-accent bg-accent text-accent-fg' : 'border-separator bg-bg text-fg'),
+                ? cn('flex-1 px-2', index > 0 && 'border-l border-separator', selected ? 'bg-accent text-accent-fg' : 'bg-surface text-fg')
+                : cn('rounded-md border px-3.5', selected ? 'border-accent bg-accent text-accent-fg' : 'border-separator bg-surface text-fg'),
             )}
           >
             {option.label}

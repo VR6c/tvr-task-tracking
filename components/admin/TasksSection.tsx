@@ -54,7 +54,7 @@ export function TasksSection() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Search by title"
-          className="min-h-11 w-full rounded-lg border border-separator bg-surface pl-9 pr-3 text-[15px]"
+          className="min-h-11 w-full rounded-xl border border-separator bg-bg pl-9 pr-3 text-[15px]"
         />
       </div>
 
@@ -68,7 +68,7 @@ export function TasksSection() {
         <>
           <ul className="space-y-2">
             {tasks.data.tasks.map((task) => (
-              <li key={task.id} className="flex items-start gap-2 rounded-lg border border-separator bg-surface p-3">
+              <li key={task.id} className="flex items-start gap-2 rounded-xl border border-separator bg-bg p-3">
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-[15px] font-medium leading-snug">{task.title}</p>
                   <p className="mt-1 text-xs text-hint">

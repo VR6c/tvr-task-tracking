@@ -74,7 +74,7 @@ export function QuickAddCard({ onAdd }: QuickAddCardProps) {
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} aria-label="Quick add task" className="space-y-3 rounded-lg border border-separator bg-surface p-3">
+    <form onSubmit={(e) => void submit(e)} aria-label="Quick add task" className="space-y-3 rounded-xl border border-separator bg-bg p-3">
       <TextField
         label="Task title"
         hideLabel

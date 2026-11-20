@@ -74,15 +74,25 @@
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/*
+ * Safe areas. Inside Telegram fullscreen the device inset (notch / home bar) and Telegram's own header
+ * controls are reported separately; --header-top is where page content must start to clear both.
+ */
+:root {
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--tg-viewport-safe-area-inset-top, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--tg-viewport-safe-area-inset-bottom, 0px));
+  --header-top: calc(var(--safe-top) + var(--tg-viewport-content-safe-area-inset-top, 0px));
+}
+
 html {
-  background: var(--color-bg);
+  background: var(--color-surface);
   color-scheme: light dark;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  background: var(--color-surface);
   color: var(--color-fg);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
