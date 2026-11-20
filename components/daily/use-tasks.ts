@@ -25,7 +25,7 @@ export interface TasksApi {
 }
 
 /** Fields the edit sheet can change; status goes through `changeStatus` because it also moves `completedAt`. */
-const EDITABLE_FIELDS = ['title', 'category', 'environment', 'buildVersion', 'issueRemark', 'isOverDeadline'] as const;
+const EDITABLE_FIELDS = ['title', 'status', 'category', 'environment', 'buildVersion', 'issueRemark', 'isOverDeadline'] as const;
 
 /** Copies only the editable fields that are present (not undefined) on `source`. */
 function pickEditable(source: Partial<Pick<TaskDTO, (typeof EDITABLE_FIELDS)[number]>>): Partial<TaskDTO> {
