@@ -11,7 +11,7 @@ import type { AdminStatsResponse } from '@/types/api';
 
 function Stat({ label, value, tone }: { label: string; value: number; tone?: 'warn' | 'danger' }) {
   return (
-    <div className="rounded-lg border border-separator bg-surface p-3">
+    <div className="rounded-xl border border-separator bg-bg p-3">
       <dd className={cn('text-2xl font-bold tabular-nums', value > 0 && tone === 'warn' && 'text-warn', value > 0 && tone === 'danger' && 'text-danger')}>
         {value}
       </dd>
@@ -44,7 +44,7 @@ export function StatsSection() {
             <Stat label="Success" value={data.byStatus.Success} />
             <Stat label="Weekly reviews" value={data.totals.weeklyReviews} />
           </dl>
-          <div className="rounded-lg border border-separator bg-surface p-3">
+          <div className="rounded-xl border border-separator bg-bg p-3">
             <h3 className="text-sm font-semibold">{formatMonthLabel(data.month)} by category</h3>
             <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               {TASK_CATEGORIES.map((category) => (

@@ -13,11 +13,11 @@ interface WeeklySectionListProps {
 
 export function WeeklySectionList({ title, icon: Icon, tasks, emptyText, showRemark }: WeeklySectionListProps) {
   return (
-    <section aria-label={title} className="rounded-lg border border-separator bg-surface p-3">
+    <section aria-label={title} className="rounded-xl border border-separator bg-bg p-3">
       <h3 className="flex items-center gap-2 text-sm font-semibold">
         <Icon aria-hidden className="size-4 text-accent" />
         {title}
-        <span className="ml-auto rounded-full bg-bg px-2 py-0.5 text-xs font-medium text-hint">{tasks.length}</span>
+        <span className="ml-auto rounded-full bg-surface px-2 py-0.5 text-xs font-medium text-hint">{tasks.length}</span>
       </h3>
       {tasks.length === 0 ? (
         <p className="mt-2 text-sm text-hint">{emptyText}</p>

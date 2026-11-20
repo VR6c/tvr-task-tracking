@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { Providers } from '@/components/Providers';
-import { TabBar } from '@/components/TabBar';
-import { PAGE_GUTTER, PAGE_WIDTH } from '@/lib/layout';
+import { AppShell } from '@/components/AppShell';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,6 +14,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f1f3f5' },
+    { media: '(prefers-color-scheme: dark)', color: '#0e1621' },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -22,12 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <Providers>
-          <TabBar />
-          <main
-            className={`mx-auto min-h-dvh w-full ${PAGE_WIDTH} ${PAGE_GUTTER} pb-[calc(9.5rem+env(safe-area-inset-bottom))] md:min-h-[calc(100dvh-3.5rem)] md:pb-12`}
-          >
-            {children}
-          </main>
+          <AppShell>{children}</AppShell>
         </Providers>
       </body>
     </html>

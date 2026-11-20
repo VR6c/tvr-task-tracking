@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CalendarCheck, ClipboardCopy } from 'lucide-react';
 import { QuickAddCard } from '@/components/daily/QuickAddCard';
 import { TaskEditSheet } from '@/components/daily/TaskEditSheet';
+import { StatusSummary } from '@/components/daily/StatusSummary';
 import { TaskFeed } from '@/components/daily/TaskFeed';
 import { useTasks } from '@/components/daily/use-tasks';
 import { PeriodNav } from '@/components/PeriodNav';
@@ -39,7 +40,7 @@ export function DailyScreen() {
           resource.data && (
             <span
               aria-label={`${countCompleted(tasks)} of ${tasks.length} tasks done`}
-              className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-md bg-ok/15 px-3 text-sm font-semibold text-ok"
+              className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-ok/15 px-3 text-sm font-semibold text-ok"
             >
               <CalendarCheck aria-hidden className="size-4" />
               {countCompleted(tasks)}/{tasks.length} Tasks Done
@@ -48,7 +49,7 @@ export function DailyScreen() {
         }
       >
         <PeriodNav
-          className="md:max-w-sm"
+          className="md:max-w-sm lg:w-80"
           label={
             isToday ? (
               'Today'
@@ -65,8 +66,10 @@ export function DailyScreen() {
         />
       </ScreenHeader>
 
-      <div className="space-y-5 lg:grid lg:grid-cols-[21rem_minmax(0,1fr)] lg:items-start lg:gap-8 lg:space-y-0">
-        <div className="lg:sticky lg:top-20">
+      {resource.data && <StatusSummary tasks={tasks} />}
+
+      <div className="mt-5 space-y-5 lg:mt-8 lg:grid lg:grid-cols-[24rem_minmax(0,1fr)] lg:items-start lg:gap-8 lg:space-y-0">
+        <div className="lg:sticky lg:top-24">
           <QuickAddCard onAdd={addTask} />
         </div>
         <div>
