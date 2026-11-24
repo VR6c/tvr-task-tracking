@@ -37,15 +37,7 @@ export function DailyScreen() {
         title={isToday ? 'Today' : formatDateLong(date)}
         subtitle={isToday ? formatDateLong(date) : undefined}
         trailing={
-          resource.data && (
-            <span
-              aria-label={`${countCompleted(tasks)} of ${tasks.length} tasks done`}
-              className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-ok/15 px-3 text-sm font-semibold text-ok"
-            >
-              <CalendarCheck aria-hidden className="size-4" />
-              {countCompleted(tasks)}/{tasks.length} Tasks Done
-            </span>
-          )
+          resource.data && <DoneBadge done={countCompleted(tasks)} total={tasks.length} />
         }
       >
         <PeriodNav
@@ -75,15 +67,15 @@ export function DailyScreen() {
         <div>
           {resource.error ? (
             <ErrorState message={resource.error} onRetry={resource.reload} />
-          ) : resource.loading || !resource.data ? (
-            <SkeletonList label="Loading tasks" />
-          ) : (
+          ) : resource.data ? (
             <TaskFeed
               tasks={tasks}
               onStatusChange={(t, s) => void changeStatus(t, s)}
               onEdit={(t) => setEditingId(t.id)}
               onDelete={(t) => void deleteTask(t)}
             />
+          ) : (
+            <SkeletonList label="Loading tasks" />
           )}
         </div>
       </div>
@@ -102,6 +94,18 @@ export function DailyScreen() {
         <TaskEditSheet task={editing} onSave={(patch) => editTask(editing, patch)} onClose={() => setEditingId(null)} />
       )}
     </>
+  );
+}
+
+function DoneBadge({ done, total }: { done: number; total: number }) {
+  return (
+    <span
+      aria-label={`${done} of ${total} tasks done`}
+      className="inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full bg-ok/15 px-3 text-sm font-semibold text-ok"
+    >
+      <CalendarCheck aria-hidden className="size-4" />
+      {done}/{total} Tasks Done
+    </span>
   );
 }
 

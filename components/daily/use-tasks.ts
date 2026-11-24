@@ -25,7 +25,15 @@ export interface TasksApi {
 }
 
 /** Fields the edit sheet can change; status goes through `changeStatus` because it also moves `completedAt`. */
-const EDITABLE_FIELDS = ['title', 'status', 'category', 'environment', 'buildVersion', 'issueRemark', 'isOverDeadline'] as const;
+const EDITABLE_FIELDS = [
+  'title',
+  'status',
+  'category',
+  'environment',
+  'buildVersion',
+  'issueRemark',
+  'isOverDeadline',
+] as const;
 
 /** Copies only the editable fields that are present (not undefined) on `source`. */
 function pickEditable(source: Partial<Pick<TaskDTO, (typeof EDITABLE_FIELDS)[number]>>): Partial<TaskDTO> {
@@ -36,7 +44,7 @@ function pickEditable(source: Partial<Pick<TaskDTO, (typeof EDITABLE_FIELDS)[num
   return picked as Partial<TaskDTO>;
 }
 
-const byCreated =(a: TaskDTO, b: TaskDTO): number => a.createdAt.localeCompare(b.createdAt);
+const byCreated = (a: TaskDTO, b: TaskDTO): number => a.createdAt.localeCompare(b.createdAt);
 
 const withTasks = (res: TasksResponse, fn: (tasks: TaskDTO[]) => TaskDTO[]): TasksResponse => ({
   ...res,
@@ -134,8 +142,7 @@ export function useTasks(date: string | null): TasksApi {
   );
 
   const editTask = useCallback(
-    (task: TaskDTO, patch: UpdateTaskInput) =>
-      send(task, patch, pickEditable(task), pickEditable(patch)),
+    (task: TaskDTO, patch: UpdateTaskInput) => send(task, patch, pickEditable(task), pickEditable(patch)),
     [send],
   );
 
