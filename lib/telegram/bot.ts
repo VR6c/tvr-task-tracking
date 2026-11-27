@@ -8,7 +8,7 @@ import { getEnv } from '@/lib/env';
 import { formatWeeklySlide } from '@/lib/formatters/weekly-slide';
 import { toTaskDTO } from '@/lib/tasks';
 import { dayOffLabel, parseDayOffMessage } from '@/lib/telegram/day-off';
-import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
+import { chunkMessage, formatDailyTaskList, formatMonthTaskList } from '@/lib/telegram/daily-report';
 import { formatKpiSummary } from '@/lib/telegram/kpi-summary';
 import { MENU, buildQuickMenu } from '@/lib/telegram/menu';
 import { PARSE_HELP, parseTaskMessage } from '@/lib/telegram/parser';
@@ -60,6 +60,18 @@ export function createBot(): Bot {
     }
   };
 
+  const sendMonthTasks = async (ctx: Context) => {
+    const view = await loadMonthlyView(getDb(), ALLOWED_TELEGRAM_USER_ID, monthYearOf(todayInTimezone()));
+    const chunks = chunkMessage(formatMonthTaskList(view.month, view.tasks));
+    for (const [index, text] of chunks.entries()) {
+      const isLast = index === chunks.length - 1;
+      await ctx.reply(text, {
+        parse_mode: 'Markdown',
+        ...(isLast ? { reply_markup: openAppKeyboard('Open monthly', '/monthly') } : {}),
+      });
+    }
+  };
+
   const sendKpis = async (ctx: Context) => {
     const view = await loadMonthlyView(getDb(), ALLOWED_TELEGRAM_USER_ID, monthYearOf(todayInTimezone()));
     await ctx.reply(formatKpiSummary(view), { parse_mode: 'Markdown', reply_markup: openAppKeyboard('Open KPIs', '/monthly') });
@@ -84,9 +96,11 @@ export function createBot(): Bot {
   bot.command('menu', sendMenu);
   bot.command('today', sendTodayTasks);
   bot.command('week', sendWeek);
+  bot.command('month', sendMonthTasks);
   bot.command('kpi', sendKpis);
   bot.hears(MENU.today, sendTodayTasks);
   bot.hears(MENU.week, sendWeek);
+  bot.hears(MENU.month, sendMonthTasks);
   bot.hears(MENU.kpi, sendKpis);
 
   bot.on('message:text', async (ctx) => {

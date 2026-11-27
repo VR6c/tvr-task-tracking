@@ -222,12 +222,14 @@ Sending `/start` or `/menu` pins a persistent reply keyboard under the Telegram 
 | **Open App** | Launches the Mini App directly (a WebApp button pointing to `/daily`) |
 | **Today's Tasks** | Replies with "List all task today (date)" — all tasks scheduled today with completion counter, details, and status |
 | **This Week** | Replies with the complete CheckinMe slide format (achievements, plan, tracking, issues, GCIN), plus an inline button to open the Weekly Review |
+| **This Month** | Replies with "List all task this month (month)" — every task of the current month once (same title on several days counts once, latest status wins), with completion counter, plus an inline button to open Monthly |
 | **Monthly KPIs** | Replies with the current month's 5 KPIs (actual vs. Good/Excellence targets, status) and deadline audit counts, plus an inline button to open Monthly KPIs |
 
 The same actions exist as slash commands:
 - `/start` — Send welcome message, WebApp button, and pin the Quick Menu keyboard
 - `/menu` — Re-send and re-pin the Quick Menu keyboard
 - `/today` — List today's tasks and status summary
+- `/month` — List all unique tasks of the current month
 - `/week` — Send this week's review in CheckinMe slide format
 - `/kpi` — Send monthly KPI snapshot & deadline audit
 - `/help` — Message syntax and logging guide

@@ -5,6 +5,7 @@ export const MENU = {
   openApp: 'Open App',
   today: "Today's Tasks",
   week: 'This Week',
+  month: 'This Month',
   kpi: 'Monthly KPIs',
 } as const;
 
@@ -20,6 +21,8 @@ export function buildQuickMenu(appUrl: string): Keyboard {
     .row()
     .text(MENU.today)
     .text(MENU.week)
+    .row()
+    .text(MENU.month)
     .text(MENU.kpi)
     .persistent()
     .resized()
