@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chunkMessage, formatDailyTaskList } from '@/lib/telegram/daily-report';
+import { chunkMessage, formatDailyTaskList, formatMonthTaskList } from '@/lib/telegram/daily-report';
 import { makeTask } from './factories';
 
 describe('formatDailyTaskList', () => {
@@ -40,5 +40,23 @@ describe('chunkMessage', () => {
     expect(chunks.length).toBeGreaterThan(1);
     expect(chunks.every((c) => c.length <= 500)).toBe(true);
     expect(chunks.join('\n')).toBe(text);
+  });
+});
+
+describe('formatMonthTaskList', () => {
+  it('numbers each task with status and date and counts the finished ones', () => {
+    const text = formatMonthTaskList('2026-11', [
+      makeTask({ title: 'Login flow', status: 'Done', scheduledDate: '2026-11-02' }),
+      makeTask({ title: 'Checkout', status: 'Feedback', scheduledDate: '2026-11-05', isOverDeadline: true }),
+    ]);
+    expect(text).toContain('*List all task this month (November 2026)*');
+    expect(text).toContain('1/2 tasks done');
+    expect(text).toContain('1. Login flow — Done,');
+    expect(text).toContain('2. Checkout — Feedback,');
+    expect(text).toContain('(over deadline)');
+  });
+
+  it('says so when the month has no tasks', () => {
+    expect(formatMonthTaskList('2026-11', [])).toContain('No tasks were logged this month.');
   });
 });

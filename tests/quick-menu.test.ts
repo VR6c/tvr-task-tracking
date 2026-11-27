@@ -12,10 +12,11 @@ describe('buildQuickMenu', () => {
     expect(keyboard.input_field_placeholder).toContain('Log a task');
   });
 
-  it('has a WebApp button on the first row and the three chat buttons below', () => {
-    const [first, second] = keyboard.keyboard;
+  it('has a WebApp button on the first row and the four chat buttons below', () => {
+    const [first, second, third] = keyboard.keyboard;
     expect(first).toEqual([{ text: MENU.openApp, web_app: { url: 'https://app.example.com/daily' } }]);
-    expect(second).toEqual([{ text: MENU.today }, { text: MENU.week }, { text: MENU.kpi }]);
+    expect(second).toEqual([{ text: MENU.today }, { text: MENU.week }]);
+    expect(third).toEqual([{ text: MENU.month }, { text: MENU.kpi }]);
   });
 });
 
@@ -23,6 +24,7 @@ describe('menu labels vs the task parser', () => {
   it('would otherwise be parsed as tasks, which is why the handlers are registered first', () => {
     expect(parseTaskMessage(MENU.today).ok).toBe(true);
     expect(parseTaskMessage(MENU.week).ok).toBe(true);
+    expect(parseTaskMessage(MENU.month).ok).toBe(true);
     expect(parseTaskMessage(MENU.kpi).ok).toBe(true);
   });
 });

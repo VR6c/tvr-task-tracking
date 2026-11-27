@@ -1,6 +1,6 @@
 import { isCompletedStatus } from '@/lib/constants';
 import { inline } from '@/lib/formatters/escape';
-import { formatDateLong } from '@/lib/week-utils';
+import { formatDateLong, formatDateShort, formatMonthLabel } from '@/lib/week-utils';
 import type { TaskDTO } from '@/types/api';
 
 /** Telegram rejects messages over 4096 characters; stay safely below it. */
@@ -21,6 +21,20 @@ export function formatDailyTaskList(date: string, tasks: readonly TaskDTO[]): st
       .filter(Boolean)
       .join('\n');
   });
+
+  return [heading, `${done}/${tasks.length} tasks done`, '', ...lines].join('\n');
+}
+
+/** Every distinct task of a month (pass the de-duplicated list), oldest first, with status and date. */
+export function formatMonthTaskList(month: string, tasks: readonly TaskDTO[]): string {
+  const heading = `*List all task this month (${formatMonthLabel(month)})*`;
+  if (tasks.length === 0) return `${heading}\n\nNo tasks were logged this month.`;
+
+  const done = tasks.filter((t) => isCompletedStatus(t.status)).length;
+  const lines = tasks.map(
+    (task, index) =>
+      `${index + 1}. ${inline(task.title)} — ${task.status}, ${formatDateShort(task.scheduledDate)}${task.isOverDeadline ? ' (over deadline)' : ''}`,
+  );
 
   return [heading, `${done}/${tasks.length} tasks done`, '', ...lines].join('\n');
 }
