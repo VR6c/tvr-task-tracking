@@ -36,6 +36,7 @@ describe('formatKpiSummary', () => {
       { key: 'production_error', label: 'Finding Production Error', category: 'production_bug', period: 'week', actual: 2, good: 4, excellence: 12, status: 'Under' },
     ],
     audit: { onTime: [], overDeadline: [] },
+    tasks: [],
     narrative: { challenges: '', successStories: '' },
   };
 

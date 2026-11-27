@@ -64,6 +64,8 @@ export interface MonthlyResponse {
   weeksInMonth: number;
   kpis: KpiItemResult[];
   audit: DeadlineAudit;
+  /** Every task of the month, one entry per title (latest entry wins). */
+  tasks: TaskDTO[];
   narrative: { challenges: string; successStories: string };
 }
 

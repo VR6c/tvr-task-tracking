@@ -83,3 +83,25 @@ export function toTaskDTO(row: TaskRow): TaskDTO {
 export function countCompleted(tasks: readonly Pick<TaskDTO, 'status'>[]): number {
   return tasks.filter((t) => isCompletedStatus(t.status)).length;
 }
+
+export function byScheduleThenCreated(a: TaskDTO, b: TaskDTO): number {
+  return a.scheduledDate.localeCompare(b.scheduledDate) || a.createdAt.localeCompare(b.createdAt);
+}
+
+const titleKey = (t: TaskDTO): string => t.title.trim().toLowerCase();
+
+/**
+ * One entry per task title. The same task logged on several days counts once, and the latest entry
+ * (by scheduled date, then creation time) decides its status. Expects `sortedTasks` oldest-first;
+ * the result keeps the order in which each title first appeared.
+ */
+export function latestPerTitle(sortedTasks: readonly TaskDTO[]): TaskDTO[] {
+  const latest = new Map<string, TaskDTO>();
+  for (const task of sortedTasks) latest.set(titleKey(task), task);
+  return [...latest.values()];
+}
+
+/** Every distinct task of a month, no title listed twice. */
+export function uniqueMonthTasks(tasks: readonly TaskDTO[]): TaskDTO[] {
+  return latestPerTitle([...tasks].sort(byScheduleThenCreated));
+}
