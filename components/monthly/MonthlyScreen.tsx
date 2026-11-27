@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import { AuditSection } from '@/components/monthly/AuditSection';
 import { KpiCard } from '@/components/monthly/KpiCard';
+import { MonthTaskList } from '@/components/monthly/MonthTaskList';
 import { NarrativeBlocks } from '@/components/monthly/NarrativeBlocks';
 import { PeriodNav } from '@/components/PeriodNav';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -76,6 +77,7 @@ export function MonthlyScreen() {
             ))}
           </ul>
           <div className="space-y-8">
+            <MonthTaskList tasks={resource.data.tasks} />
             <AuditSection audit={resource.data.audit} />
             <NarrativeBlocks key={resource.data.month} month={resource.data.month} server={resource.data.narrative} />
           </div>

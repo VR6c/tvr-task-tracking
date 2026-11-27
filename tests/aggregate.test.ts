@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { uniqueMonthTasks } from '@/lib/tasks';
 import { aggregateWeek } from '@/lib/weekly-aggregate';
 import { weekRange } from '@/lib/week-utils';
 import { makeTask } from './factories';
@@ -92,5 +93,15 @@ describe('aggregateWeek: one task logged on several days', () => {
   it('does not merge different titles', () => {
     const other = makeTask({ title: 'Task B', status: 'Feedback', scheduledDate: '2026-11-03' });
     expect(aggregateWeek([wed, other], range).achievements).toEqual([other, wed]);
+  });
+});
+
+describe('uniqueMonthTasks', () => {
+  it('lists a title once, case/space-insensitively, with its latest entry deciding the status', () => {
+    const first = makeTask({ title: 'Login flow', status: 'Feedback', scheduledDate: '2026-11-02' });
+    const later = makeTask({ title: ' login FLOW ', status: 'Done', scheduledDate: '2026-11-10' });
+    const other = makeTask({ title: 'Checkout', scheduledDate: '2026-11-05' });
+    const result = uniqueMonthTasks([later, other, first]);
+    expect(result).toEqual([later, other]);
   });
 });
