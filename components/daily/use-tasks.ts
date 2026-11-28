@@ -114,7 +114,13 @@ export function useTasks(date: string | null): TasksApi {
         const { task: saved } = await enqueue(task.id, () =>
           apiFetch<{ task: TaskDTO }>(`/api/tasks/${task.id}`, { method: 'PATCH', body: patch }),
         );
-        patchLocal(task.id, saved);
+        // A Plan task is rescheduled to tomorrow by the server, so it leaves this day's list.
+        if (saved.scheduledDate !== date) {
+          mutate((res) => withTasks(res, (tasks) => tasks.filter((t) => t.id !== task.id)));
+          toast.show('Moved to tomorrow');
+        } else {
+          patchLocal(task.id, saved);
+        }
         return true;
       } catch (error) {
         patchLocal(task.id, revert);
@@ -123,7 +129,7 @@ export function useTasks(date: string | null): TasksApi {
         return false;
       }
     },
-    [enqueue, patchLocal, toast],
+    [date, enqueue, mutate, patchLocal, toast],
   );
 
   const changeStatus = useCallback(
