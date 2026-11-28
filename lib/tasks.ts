@@ -1,7 +1,7 @@
 import type { NewTaskRow, TaskRow } from '@/db/schema';
 import { isCompletedStatus, type TaskStatus } from '@/lib/constants';
 import type { CreateTaskInput, UpdateTaskInput } from '@/lib/validation';
-import { monthYearOf, todayInTimezone } from '@/lib/week-utils';
+import { addDays, monthYearOf, todayInTimezone } from '@/lib/week-utils';
 import type { TaskDTO } from '@/types/api';
 
 /**
@@ -44,7 +44,7 @@ export function buildNewTask(
 export type TaskPatch = Partial<
   Pick<
     TaskRow,
-    'status' | 'completedAt' | 'isOverDeadline' | 'issueRemark' | 'title' | 'category' | 'environment' | 'buildVersion'
+    'status' | 'completedAt' | 'scheduledDate' | 'monthYear' | 'isOverDeadline' | 'issueRemark' | 'title' | 'category' | 'environment' | 'buildVersion'
   >
 >;
 
@@ -59,6 +59,11 @@ export function buildTaskPatch(existing: TaskRow, input: UpdateTaskInput, now: D
   if (input.status !== undefined) {
     patch.status = input.status;
     patch.completedAt = computeCompletedAt(existing, input.status, now);
+    // Switching to Plan reschedules the task to tomorrow, so it leaves today's list instead of being copied.
+    if (input.status === 'Plan' && existing.status !== 'Plan') {
+      patch.scheduledDate = addDays(todayInTimezone(now), 1);
+      patch.monthYear = monthYearOf(patch.scheduledDate);
+    }
   }
   return patch;
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TaskRow } from '@/db/schema';
 import { buildNewTask, buildTaskPatch, computeCompletedAt } from '@/lib/tasks';
 import { createTaskSchema, gcinSchema, updateTaskSchema, weeklyQuerySchema } from '@/lib/validation';
+import { addDays, monthYearOf, todayInTimezone } from '@/lib/week-utils';
 
 const now = new Date('2026-11-03T03:00:00.000Z');
 const earlier = new Date('2026-11-02T03:00:00.000Z');
@@ -41,6 +42,15 @@ describe('task construction', () => {
     const existing = { status: 'Feedback', completedAt: null } as TaskRow;
     expect(buildTaskPatch(existing, { isOverDeadline: true }, now)).toEqual({ isOverDeadline: true });
     expect(buildTaskPatch(existing, { status: 'Done' }, now)).toEqual({ status: 'Done', completedAt: now });
+  });
+
+  it('moves a task to tomorrow when it becomes Plan, and leaves other edits on its date', () => {
+    const existing = { status: 'Feedback', completedAt: null } as TaskRow;
+    const patch = buildTaskPatch(existing, { status: 'Plan' }, now);
+    expect(patch).toMatchObject({ status: 'Plan', completedAt: null, scheduledDate: addDays(todayInTimezone(now), 1) });
+    expect(patch.monthYear).toBe(monthYearOf(patch.scheduledDate!));
+    expect(buildTaskPatch({ ...existing, status: 'Plan' } as TaskRow, { status: 'Plan' }, now)).not.toHaveProperty('scheduledDate');
+    expect(buildTaskPatch(existing, { title: 'x' }, now)).not.toHaveProperty('scheduledDate');
   });
 });
 
